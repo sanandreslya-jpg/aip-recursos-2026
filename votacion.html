@@ -1,0 +1,330 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Elecciones Municipales Escolares</title>
+<style>
+:root{--bg:#f4f6fb;--card:#fff;--ink:#1c2333;--mut:#6b7385;--pri:#1d4ed8;--ok:#15803d;--bad:#b91c1c;--line:#dde2ee}
+*{box-sizing:border-box}
+body{margin:0;font-family:system-ui,Segoe UI,Arial,sans-serif;background:var(--bg);color:var(--ink)}
+header{background:var(--pri);color:#fff;padding:10px 20px;display:flex;align-items:center;gap:14px}
+header img{height:48px}
+header h1{font-size:1.15rem;margin:0;flex:1}
+header small{opacity:.85;display:block;font-weight:400}
+button{font:inherit;cursor:pointer;border:0;border-radius:8px;padding:10px 18px;background:var(--pri);color:#fff}
+button.sec{background:#e8ecf6;color:var(--ink)}button.bad{background:var(--bad)}button.ok{background:var(--ok)}
+button:disabled{opacity:.5;cursor:not-allowed}
+main{max-width:1000px;margin:0 auto;padding:20px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px;margin-bottom:16px}
+input,textarea,select{font:inherit;padding:9px 11px;border:1px solid var(--line);border-radius:8px;width:100%;background:#fff;color:var(--ink)}
+label{display:block;font-size:.85rem;color:var(--mut);margin:10px 0 4px}
+.row{display:flex;gap:12px;flex-wrap:wrap}.row>*{flex:1;min-width:180px}
+.center{text-align:center}
+.big{font-size:1.6rem}
+.dni{font-size:2rem;text-align:center;letter-spacing:.2em;max-width:340px;margin:10px auto}
+.lists{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px}
+.opt{border:3px solid var(--line);border-radius:14px;padding:16px;background:#fff;cursor:pointer;text-align:left;color:var(--ink);transition:.1s}
+.opt:hover{transform:translateY(-2px)}
+.opt.sel{border-color:var(--ok);box-shadow:0 0 0 4px #15803d33}
+.opt h3{margin:0 0 4px}.opt .al{font-weight:700}.opt ul{margin:8px 0 0;padding-left:18px;font-size:.9rem;color:var(--mut)}
+.dot{display:inline-block;width:14px;height:14px;border-radius:50%;margin-right:6px;vertical-align:middle}
+table{width:100%;border-collapse:collapse;font-size:.92rem}th,td{padding:7px 8px;border-bottom:1px solid var(--line);text-align:left}
+.bar{height:22px;background:#e8ecf6;border-radius:6px;overflow:hidden}.bar>i{display:block;height:100%}
+.msg{padding:10px 14px;border-radius:8px;margin:10px 0}.msg.err{background:#fee2e2;color:var(--bad)}.msg.good{background:#dcfce7;color:var(--ok)}.msg.warn{background:#fef3c7;color:#92400e}
+.tabs{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap}.tabs button{background:#e8ecf6;color:var(--ink)}.tabs button.on{background:var(--pri);color:#fff}
+.hide{display:none!important}
+.pill{display:inline-block;padding:2px 10px;border-radius:99px;font-size:.8rem;background:#e8ecf6}
+@media print{header,.tabs,button,.noprint{display:none!important}body{background:#fff}.card{border:0}}
+</style>
+</head>
+<body>
+<header>
+  <img src="INSIGNIA 16210_MEJORADA.png" alt="" onerror="this.style.display='none'">
+  <h1><span id="hTitle">Elecciones Municipales Escolares</span><small id="hSub"></small></h1>
+  <button class="sec" id="btnAdmin">⚙ Administración</button>
+</header>
+<main>
+
+<!-- ===== VOTO ===== -->
+<section id="vVote">
+  <div class="card center" id="stIdent">
+    <div class="big">Ingresa tu DNI para votar</div>
+    <input id="dniIn" class="dni" inputmode="numeric" maxlength="12" autocomplete="off" placeholder="DNI">
+    <div><button id="btnIdent" class="big" style="padding:12px 40px">Continuar</button></div>
+    <div id="identMsg"></div>
+  </div>
+  <div id="stBallot" class="hide">
+    <div class="card center"><div class="big" id="hello"></div><div>Toca la lista de tu preferencia y luego presiona <b>Emitir voto</b>.</div></div>
+    <div class="lists" id="ballotLists"></div>
+    <div class="lists" style="margin-top:14px" id="ballotSpecial"></div>
+    <div class="card center" style="margin-top:16px">
+      <button class="sec" id="btnCancelVote">Cancelar</button>
+      <button class="ok" id="btnCast" disabled>Emitir voto</button>
+    </div>
+  </div>
+  <div id="stThanks" class="card center hide">
+    <div class="big" style="color:var(--ok)">✔ ¡Gracias! Tu voto fue registrado.</div>
+    <p>Tu voto es secreto. Cede la laptop al siguiente compañero.</p>
+  </div>
+</section>
+
+<!-- ===== ADMIN ===== -->
+<section id="vAdmin" class="hide">
+  <div class="tabs" id="tabs">
+    <button data-t="tConfig" class="on">Configuración</button>
+    <button data-t="tPadron">Padrón</button>
+    <button data-t="tListas">Listas</button>
+    <button data-t="tRes">Resultados y acta</button>
+    <button data-t="tCons">Consolidar mesas</button>
+  </div>
+
+  <div id="tConfig" class="card">
+    <div class="row">
+      <div><label>Nombre del colegio</label><input id="cSchool"></div>
+      <div><label>Nombre de esta mesa / laptop</label><input id="cMesa" placeholder="Ej: Mesa 1"></div>
+      <div><label>PIN de administrador</label><input id="cPin" type="password"></div>
+    </div>
+    <p>Estado de la votación: <span class="pill" id="stState"></span></p>
+    <button id="btnOpen" class="ok">Abrir votación</button>
+    <button id="btnClose" class="bad">Cerrar votación</button>
+    <button id="btnSaveCfg" class="sec">Guardar configuración</button>
+    <hr>
+    <button id="btnReset" class="bad">Borrar TODOS los datos de esta laptop</button>
+    <div id="cfgMsg"></div>
+  </div>
+
+  <div id="tPadron" class="card hide">
+    <p>Pega o carga el padrón en CSV con columnas: <b>dni, nombre, grado, seccion, mesa</b> (la columna <i>mesa</i> es opcional; si la pones, solo votan en esa mesa los alumnos que coincidan).</p>
+    <input type="file" id="padFile" accept=".csv,.txt">
+    <label>O pega aquí el contenido</label>
+    <textarea id="padText" rows="6" placeholder="dni;nombre;grado;seccion;mesa&#10;70123456;Ana Pérez;3;A;Mesa 1"></textarea>
+    <p><button id="btnPad">Cargar padrón</button> <button class="sec" id="btnPadSample">Descargar plantilla</button></p>
+    <div id="padMsg"></div>
+    <div id="padSummary"></div>
+  </div>
+
+  <div id="tListas" class="card hide">
+    <div id="listsEd"></div>
+    <button id="btnAddList" class="sec">+ Agregar lista</button>
+    <button id="btnSaveLists">Guardar listas</button>
+    <div id="listMsg"></div>
+  </div>
+
+  <div id="tRes" class="hide">
+    <div class="card" id="resBox"></div>
+    <div class="card noprint">
+      <button id="btnPrint">Imprimir acta</button>
+      <button class="sec" id="btnExport">Exportar resultados de esta mesa (JSON)</button>
+    </div>
+  </div>
+
+  <div id="tCons" class="card hide">
+    <p>Para sumar los resultados de otras laptops: en cada una, entra a <b>Resultados y acta → Exportar</b> y copia el archivo a esta laptop (USB). Luego cárgalo aquí.</p>
+    <input type="file" id="impFile" accept=".json" multiple>
+    <div id="impMsg"></div>
+    <div id="impList"></div>
+  </div>
+
+  <p class="center"><button class="sec" id="btnBack">← Volver a la pantalla de votación</button></p>
+</section>
+</main>
+
+<script>
+const $=id=>document.getElementById(id);
+const KEY='votacion16210_v1';
+const DEF={school:'I.E. 16210',mesa:'Mesa 1',pin:'1234',status:'config',lists:[
+ {id:'L1',name:'Lista 1',color:'#1d4ed8',alcalde:'',regidores:[]},
+ {id:'L2',name:'Lista 2',color:'#dc2626',alcalde:'',regidores:[]}]};
+let S;
+function load(){try{S=JSON.parse(localStorage.getItem(KEY));}catch(e){S=null}
+  if(!S||typeof S!=='object')S={};
+  S.cfg=Object.assign({},DEF,S.cfg||{});S.padron=S.padron||[];S.voted=S.voted||{};S.votes=S.votes||[];S.imports=S.imports||{};}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){alert('No se pudo guardar en el navegador. No uses modo privado.');}}
+load();
+
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const msg=(el,t,k)=>{$(el).innerHTML=t?`<div class="msg ${k||'err'}">${esc(t)}</div>`:''};
+const norm=s=>String(s||'').replace(/\D/g,'');
+
+function header(){$('hTitle').textContent='Elecciones Municipales Escolares '+new Date().getFullYear();
+  $('hSub').textContent=S.cfg.school+' · '+S.cfg.mesa;}
+
+/* ---------- navegación ---------- */
+function show(v){['vVote','vAdmin'].forEach(x=>$(x).classList.toggle('hide',x!==v));}
+$('btnAdmin').onclick=()=>{const p=prompt('PIN de administrador:');if(p===null)return;
+  if(p!==S.cfg.pin){alert('PIN incorrecto');return;}show('vAdmin');renderAdmin();};
+$('btnBack').onclick=()=>{show('vVote');resetVote();};
+$('tabs').onclick=e=>{const t=e.target.dataset.t;if(!t)return;
+  [...$('tabs').children].forEach(b=>b.classList.toggle('on',b===e.target));
+  ['tConfig','tPadron','tListas','tRes','tCons'].forEach(x=>$(x).classList.toggle('hide',x!==t));
+  renderAdmin();};
+
+/* ---------- votación ---------- */
+let cur=null,choice=null;
+function resetVote(){cur=null;choice=null;$('dniIn').value='';msg('identMsg','');
+  $('stIdent').classList.remove('hide');$('stBallot').classList.add('hide');$('stThanks').classList.add('hide');$('dniIn').focus();}
+$('dniIn').addEventListener('keydown',e=>{if(e.key==='Enter')$('btnIdent').click();});
+$('btnIdent').onclick=()=>{
+  if(S.cfg.status!=='open')return msg('identMsg','La votación no está abierta.');
+  const d=norm($('dniIn').value);
+  const p=S.padron.find(x=>x.dni===d);
+  if(!p)return msg('identMsg','DNI no figura en el padrón.');
+  if(p.mesa&&p.mesa.toLowerCase()!==S.cfg.mesa.toLowerCase())return msg('identMsg','Te corresponde votar en: '+p.mesa);
+  if(S.voted[d])return msg('identMsg','Este DNI ya emitió su voto.');
+  cur=p;choice=null;
+  $('hello').textContent='Hola, '+p.nombre;
+  $('ballotLists').innerHTML=S.cfg.lists.map(l=>`<button class="opt" data-o="${esc(l.id)}" style="border-left:12px solid ${esc(l.color)}">
+    <h3><span class="dot" style="background:${esc(l.color)}"></span>${esc(l.name)}</h3>
+    <div class="al">Alcalde: ${esc(l.alcalde||'—')}</div>
+    <ul>${l.regidores.map(r=>`<li>${esc(r)}</li>`).join('')}</ul></button>`).join('');
+  $('ballotSpecial').innerHTML=`<button class="opt" data-o="BLANCO"><h3>Voto en blanco</h3></button>`;
+  $('btnCast').disabled=true;
+  $('stIdent').classList.add('hide');$('stBallot').classList.remove('hide');window.scrollTo(0,0);};
+$('stBallot').onclick=e=>{const b=e.target.closest('.opt');if(!b)return;choice=b.dataset.o;
+  document.querySelectorAll('.opt').forEach(x=>x.classList.toggle('sel',x===b));$('btnCast').disabled=false;};
+$('btnCancelVote').onclick=resetVote;
+$('btnCast').onclick=()=>{
+  if(!cur||!choice)return;
+  const l=S.cfg.lists.find(x=>x.id===choice);
+  if(!confirm('¿Confirmas tu voto por: '+(l?l.name:'VOTO EN BLANCO')+'?\nNo podrás cambiarlo.'))return;
+  if(S.voted[cur.dni])return resetVote();
+  /* voto anónimo: la lista de votantes y la urna van separadas, sin hora ni vínculo */
+  S.voted[cur.dni]=1;
+  S.votes.push(choice);
+  save();
+  $('stBallot').classList.add('hide');$('stThanks').classList.remove('hide');
+  setTimeout(resetVote,3500);};
+
+/* ---------- administración ---------- */
+function renderAdmin(){
+  header();
+  $('cSchool').value=S.cfg.school;$('cMesa').value=S.cfg.mesa;$('cPin').value=S.cfg.pin;
+  const names={config:'En configuración',open:'ABIERTA',closed:'CERRADA'};
+  $('stState').textContent=names[S.cfg.status];
+  $('btnOpen').disabled=S.cfg.status==='open'||S.cfg.status==='closed';
+  $('btnClose').disabled=S.cfg.status!=='open';
+  renderLists();renderPadSummary();renderResults();renderImports();
+}
+$('btnSaveCfg').onclick=()=>{
+  if(!$('cPin').value.trim())return msg('cfgMsg','El PIN no puede estar vacío.');
+  S.cfg.school=$('cSchool').value.trim()||DEF.school;S.cfg.mesa=$('cMesa').value.trim()||DEF.mesa;S.cfg.pin=$('cPin').value;
+  save();header();msg('cfgMsg','Configuración guardada.','good');};
+$('btnOpen').onclick=()=>{
+  if(!S.padron.length)return msg('cfgMsg','Carga primero el padrón.');
+  if(S.cfg.lists.some(l=>!l.alcalde.trim()))return msg('cfgMsg','Completa el alcalde de todas las listas.');
+  if(!confirm('Una vez abierta no podrás cambiar listas ni padrón. ¿Abrir votación?'))return;
+  S.cfg.status='open';save();renderAdmin();msg('cfgMsg','Votación abierta.','good');};
+$('btnClose').onclick=()=>{if(!confirm('¿Cerrar la votación en esta laptop? No se podrá reabrir.'))return;
+  S.cfg.status='closed';save();renderAdmin();};
+$('btnReset').onclick=()=>{
+  if(prompt('Escribe BORRAR para eliminar padrón, listas y votos de esta laptop:')!=='BORRAR')return;
+  try{localStorage.removeItem(KEY)}catch(e){}load();renderAdmin();msg('cfgMsg','Datos borrados.','good');};
+
+/* padrón */
+function parseCSV(t){
+  const lines=t.split(/\r?\n/).map(x=>x.trim()).filter(Boolean);if(!lines.length)return[];
+  const sep=lines[0].includes(';')?';':(lines[0].includes('\t')?'\t':',');
+  let rows=lines.map(l=>l.split(sep).map(c=>c.trim().replace(/^"|"$/g,'')));
+  if(isNaN(Number(norm(rows[0][0])))||!norm(rows[0][0]))rows=rows.slice(1);
+  return rows.map(r=>({dni:norm(r[0]),nombre:r[1]||'',grado:r[2]||'',seccion:r[3]||'',mesa:r[4]||''})).filter(r=>r.dni);}
+function loadPadron(text){
+  if(S.cfg.status!=='config')return msg('padMsg','No se puede cambiar el padrón con la votación abierta o cerrada.');
+  const rows=parseCSV(text);if(!rows.length)return msg('padMsg','No se encontraron filas válidas.');
+  const seen=new Set(),out=[],dup=[];
+  rows.forEach(r=>{if(seen.has(r.dni))dup.push(r.dni);else{seen.add(r.dni);out.push(r);}});
+  S.padron=out;save();renderPadSummary();
+  msg('padMsg',`Padrón cargado: ${out.length} votantes.`+(dup.length?` DNI repetidos ignorados: ${dup.join(', ')}`:''),dup.length?'warn':'good');}
+$('padFile').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>loadPadron(r.result);r.readAsText(f,'utf-8');};
+$('btnPad').onclick=()=>loadPadron($('padText').value);
+$('btnPadSample').onclick=()=>download('plantilla_padron.csv','dni;nombre;grado;seccion;mesa\n70123456;Ana Pérez;3;A;Mesa 1\n70123457;Luis Gómez;3;A;Mesa 1\n','text/csv');
+function renderPadSummary(){
+  $('padSummary').innerHTML=S.padron.length?`<p><b>${S.padron.length}</b> votantes cargados. Ya votaron: <b>${Object.keys(S.voted).length}</b>.</p>`:'<p>Aún no hay padrón.</p>';}
+
+/* listas */
+function renderLists(){
+  const locked=S.cfg.status!=='config';
+  $('listsEd').innerHTML=S.cfg.lists.map((l,i)=>`<div class="card" data-i="${i}">
+    <div class="row">
+      <div><label>Nombre de la lista</label><input class="lName" value="${esc(l.name)}" ${locked?'disabled':''}></div>
+      <div><label>Color</label><input class="lColor" type="color" value="${esc(l.color)}" ${locked?'disabled':''}></div>
+      <div><label>Candidato a alcalde</label><input class="lAl" value="${esc(l.alcalde)}" ${locked?'disabled':''}></div>
+    </div>
+    <label>Regidores (uno por línea, ej: "Regidor de Deportes: Juan Ruiz")</label>
+    <textarea class="lReg" rows="4" ${locked?'disabled':''}>${esc(l.regidores.join('\n'))}</textarea>
+    ${locked?'':`<p><button class="sec bad lDel">Quitar lista</button></p>`}</div>`).join('');
+  $('btnAddList').disabled=$('btnSaveLists').disabled=locked;}
+$('btnAddList').onclick=()=>{collectLists();const n=S.cfg.lists.length+1;
+  S.cfg.lists.push({id:'L'+Date.now(),name:'Lista '+n,color:'#16a34a',alcalde:'',regidores:[]});renderLists();};
+$('listsEd').onclick=e=>{if(!e.target.classList.contains('lDel'))return;collectLists();
+  S.cfg.lists.splice(+e.target.closest('.card').dataset.i,1);renderLists();};
+function collectLists(){
+  document.querySelectorAll('#listsEd .card').forEach(c=>{const l=S.cfg.lists[+c.dataset.i];if(!l)return;
+    l.name=c.querySelector('.lName').value.trim()||l.name;l.color=c.querySelector('.lColor').value;
+    l.alcalde=c.querySelector('.lAl').value.trim();
+    l.regidores=c.querySelector('.lReg').value.split('\n').map(x=>x.trim()).filter(Boolean);});}
+$('btnSaveLists').onclick=()=>{collectLists();if(S.cfg.lists.length<1)return msg('listMsg','Agrega al menos una lista.');
+  save();msg('listMsg','Listas guardadas.','good');};
+
+/* resultados */
+function tally(){
+  const lists=S.cfg.lists,counts={};lists.forEach(l=>counts[l.id]=0);counts.BLANCO=0;
+  let total=0;const mesas=[{mesa:S.cfg.mesa+' (esta laptop)',n:S.votes.length}];
+  const add=v=>{total++;counts[v]=(counts[v]||0)+1;};
+  S.votes.forEach(add);
+  Object.values(S.imports).forEach(m=>{m.votes.forEach(add);mesas.push({mesa:m.mesa,n:m.votes.length});});
+  // DNI repetidos entre mesas
+  const seen={},dups=new Set();
+  const mark=(d)=>{seen[d]?dups.add(d):seen[d]=1};
+  Object.keys(S.voted).forEach(mark);Object.values(S.imports).forEach(m=>m.voted.forEach(mark));
+  return{counts,total,mesas,dups:[...dups],unknown:Object.keys(counts).filter(k=>k!=='BLANCO'&&!lists.some(l=>l.id===k))};}
+function renderResults(){
+  const t=tally(),lists=S.cfg.lists;
+  const rows=lists.map(l=>({n:l.name,al:l.alcalde,c:t.counts[l.id]||0,col:l.color}));
+  rows.push({n:'Voto en blanco',al:'',c:t.counts.BLANCO,col:'#9ca3af'});
+  const mx=Math.max(1,...rows.map(r=>r.c));
+  const win=[...rows].filter(r=>r.n!=='Voto en blanco').sort((a,b)=>b.c-a.c);
+  const tie=win.length>1&&win[0].c===win[1].c&&win[0].c>0;
+  $('resBox').innerHTML=`<h2 style="margin-top:0">Acta de resultados — ${esc(S.cfg.school)}</h2>
+   <p>Fecha: ${new Date().toLocaleString('es-PE')} · Estado: ${esc({config:'sin abrir',open:'ABIERTA',closed:'CERRADA'}[S.cfg.status])}</p>
+   <table><tr><th>Lista</th><th>Alcalde</th><th style="width:40%"></th><th>Votos</th><th>%</th></tr>
+   ${rows.map(r=>`<tr><td><span class="dot" style="background:${esc(r.col)}"></span>${esc(r.n)}</td><td>${esc(r.al)}</td>
+    <td><div class="bar"><i style="width:${r.c/mx*100}%;background:${esc(r.col)}"></i></div></td><td><b>${r.c}</b></td>
+    <td>${t.total?(r.c/t.total*100).toFixed(1):'0.0'}%</td></tr>`).join('')}
+   <tr><td colspan="3"><b>Total de votos</b></td><td><b>${t.total}</b></td><td></td></tr></table>
+   <p>Padrón de esta laptop: ${S.padron.length} · Votaron aquí: ${Object.keys(S.voted).length}</p>
+   <p>Mesas incluidas: ${t.mesas.map(m=>esc(m.mesa)+' ('+m.n+')').join(' · ')}</p>
+   ${t.dups.length?`<div class="msg warn">Atención: ${t.dups.length} DNI aparecen votando en más de una mesa: ${esc(t.dups.join(', '))}. Revisar antes de proclamar.</div>`:''}
+   ${tie?'<div class="msg warn">Hay empate en el primer lugar.</div>':''}
+   ${S.cfg.status==='open'?'<div class="msg warn">La votación sigue abierta; los resultados son parciales.</div>':''}
+   <br><br><p>Presidente de mesa: ____________________ &nbsp; Personero(s): ____________________ &nbsp; Docente asesor: ____________________</p>`;}
+$('btnPrint').onclick=()=>window.print();
+function download(name,content,type){const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([content],{type:(type||'application/json')+';charset=utf-8'}));a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);}
+$('btnExport').onclick=()=>{
+  const votes=[...S.votes];for(let i=votes.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[votes[i],votes[j]]=[votes[j],votes[i]];}
+  const voted=Object.keys(S.voted).sort();
+  download('resultados_'+S.cfg.mesa.replace(/\W+/g,'_')+'.json',JSON.stringify({v:1,mesa:S.cfg.mesa,votes,voted,lists:S.cfg.lists.map(l=>l.id)},null,1));};
+
+/* consolidar */
+$('impFile').onchange=async e=>{
+  let ok=0,bad=[];
+  for(const f of e.target.files){try{
+    const d=JSON.parse(await f.text());
+    if(d.v!==1||!Array.isArray(d.votes)||!Array.isArray(d.voted))throw 0;
+    if(d.votes.length!==d.voted.length)throw new Error('Cantidad de votos y votantes no coincide');
+    S.imports[d.mesa]={mesa:String(d.mesa),votes:d.votes.map(String),voted:d.voted.map(String)};ok++;
+  }catch(err){bad.push(f.name+(err&&err.message?' ('+err.message+')':''));}}
+  save();e.target.value='';renderAdmin();
+  msg('impMsg',`${ok} archivo(s) importado(s).`+(bad.length?' No válidos: '+bad.join(', '):''),bad.length?'warn':'good');};
+function renderImports(){
+  const m=Object.values(S.imports);
+  $('impList').innerHTML=m.length?`<table><tr><th>Mesa</th><th>Votos</th><th></th></tr>${m.map(x=>`<tr><td>${esc(x.mesa)}</td><td>${x.votes.length}</td>
+   <td><button class="sec bad rm" data-m="${esc(x.mesa)}">Quitar</button></td></tr>`).join('')}</table>`:'<p>No hay mesas importadas.</p>';}
+$('impList').onclick=e=>{const m=e.target.dataset.m;if(m===undefined)return;delete S.imports[m];save();renderAdmin();};
+
+/* inicio */
+header();resetVote();
+</script>
+</body>
+</html>
