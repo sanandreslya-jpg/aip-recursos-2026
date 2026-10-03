@@ -85,7 +85,7 @@ dialog h3{margin:0 0 6px;color:var(--verde-osc)}
       <h1>Aula de Innovación Pedagógica (AIP)</h1>
       <p>I.E. 16210 «Alejandro Sánchez Arteaga» · Bagua Grande, Utcubamba — Control de entrega de recursos tecnológicos</p>
     </div>
-    <div class="clock" id="clock"></div>
+    <div class="clock"><div id="clock"></div><div id="sync" style="margin-top:4px;font-weight:600"></div></div>
   </div>
 </header>
 
@@ -213,6 +213,8 @@ const TIPOS = {
   CAM:{n:"Cámara web",i:"📷"}, PAR:{n:"Parlante",i:"🔊"}, ROU:{n:"Router / Extensión",i:"🔌"},
   OTR:{n:"Otro",i:"🧰"}
 };
+// URL de la aplicación web de Google Apps Script (ver apps-script/Code.gs). Vacía = solo este equipo.
+const API="https://script.google.com/macros/s/AKfycbwxdxjqiDaUrtEJxBn1in6X258fhNGoTJDkrmhnPeKN1pzxRMDLsUG0Byn-9m2lEzUn/exec";
 const KEY="aip16210_v1";
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -231,7 +233,16 @@ let db; try{db=JSON.parse(localStorage.getItem(KEY))}catch(e){}
 if(!db||!db.inv) db=seed();
 const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(db))}catch(e){}};
 
-let sel=new Set();
+let sel=new Set(), online=false, q=Promise.resolve(), pending=0;
+function setStatus(){$("#sync").textContent=!API?"Modo local (solo este equipo)":online?"● Sincronizado con Hoja de Google":"○ Sin conexión: datos de este equipo"}
+async function remote(body){
+  const r=body?await fetch(API,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify(body)}):await fetch(API+"?action=load");
+  const s=await r.json();if(s.error)throw new Error(s.error);return s}
+function applyState(s){db={inv:s.inv,mov:s.mov};sel=new Set([...sel].filter(c=>byCod(c)?.estado==="disp"));save();render()}
+function sync(op){if(!API)return;pending++;
+  q=q.then(async()=>{try{applyState(await remote(op));online=true}catch(e){online=false;toast("No se pudo guardar en la Hoja de Google. Revise la conexión",1)}pending--;setStatus()})}
+async function pull(){if(!API||pending)return;
+  try{let s=await remote();if(!s.inv.length)s=await remote({action:"init",inv:seed().inv});if(!pending){online=true;applyState(s)}}catch(e){online=false}setStatus()}
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,5);
 const fmt=d=>d?new Date(d).toLocaleString("es-PE",{dateStyle:"short",timeStyle:"short"}):"—";
 const tipoOf=c=>TIPOS[c.tipo]||TIPOS.OTR;
@@ -328,7 +339,7 @@ $("#btnEntregar").onclick=()=>{
   const m={id:uid(),nombre,dni,rol:$("#fRol").value,grado:$("#fGrado").value.trim(),area:$("#fArea").value.trim(),
     obs:$("#fObs").value.trim(),cods:[...sel],fecha:new Date().toISOString(),limite,devuelto:null};
   m.cods.forEach(c=>{const x=byCod(c);if(x)x.estado="pres"});
-  db.mov.push(m);save();limpiar();render();toast("Entrega registrada ✔");
+  db.mov.push(m);save();sync({action:"addMov",m});limpiar();render();toast("Entrega registrada ✔");
   if(confirm("¿Imprimir el acta de entrega?")) imprimir(m.id);
 };
 
@@ -338,16 +349,16 @@ document.addEventListener("click",e=>{
   if(g("data-dev")){devId=g("data-dev");const m=db.mov.find(x=>x.id===devId);
     $("#dvInfo").textContent=`${m.nombre} — ${m.cods.join(", ")}`;$("#dvEstado").value="ok";$("#dvObs").value="";$("#dlgDev").showModal()}
   else if(g("data-acta")) imprimir(g("data-acta"));
-  else if(g("data-mant")){byCod(g("data-mant")).estado="mant";save();render()}
-  else if(g("data-fix")){byCod(g("data-fix")).estado="disp";save();render()}
-  else if(g("data-del")){const c=g("data-del");if(confirm("¿Eliminar "+c+" del inventario?")){db.inv=db.inv.filter(x=>x.cod!==c);sel.delete(c);save();render()}}
+  else if(g("data-mant")){byCod(g("data-mant")).estado="mant";save();sync({action:"setEstado",cod:g("data-mant"),estado:"mant"});render()}
+  else if(g("data-fix")){byCod(g("data-fix")).estado="disp";save();sync({action:"setEstado",cod:g("data-fix"),estado:"disp"});render()}
+  else if(g("data-del")){const c=g("data-del");if(confirm("¿Eliminar "+c+" del inventario?")){db.inv=db.inv.filter(x=>x.cod!==c);sel.delete(c);save();sync({action:"delItem",cod:c});render()}}
 });
 $("#dvCancel").onclick=()=>$("#dlgDev").close();
 $("#dvOk").onclick=()=>{
   const m=db.mov.find(x=>x.id===devId);if(!m)return;
   m.devuelto=new Date().toISOString();m.estadoDev=$("#dvEstado").value;m.obsDev=$("#dvObs").value.trim();
   m.cods.forEach(c=>{const x=byCod(c);if(x)x.estado=m.estadoDev==="dano"?"mant":"disp"});
-  save();$("#dlgDev").close();render();toast("Devolución registrada ✔");
+  save();sync({action:"ret",id:m.id,devuelto:m.devuelto,estadoDev:m.estadoDev,obsDev:m.obsDev});$("#dlgDev").close();render();toast("Devolución registrada ✔");
 };
 
 $("#btnAdd").onclick=()=>{$("#adCod").value="";$("#adDesc").value="";$("#dlgAdd").showModal()};
@@ -357,7 +368,7 @@ $("#adOk").onclick=()=>{
   if(!cod) return toast("Ingrese un código",1);
   if(byCod(cod)) return toast("Ese código ya existe",1);
   db.inv.push({cod,tipo:$("#adTipo").value,desc:desc||tipoOf({tipo:$("#adTipo").value}).n,estado:"disp"});
-  save();$("#dlgAdd").close();render();toast("Recurso agregado ✔");
+  save();sync({action:"addItem",item:db.inv[db.inv.length-1]});$("#dlgAdd").close();render();toast("Recurso agregado ✔");
 };
 
 $("#btnCsv").onclick=()=>{
@@ -366,7 +377,7 @@ $("#btnCsv").onclick=()=>{
   const csv="﻿"+rows.map(r=>r.map(v=>`"${String(v??"").replace(/"/g,'""')}"`).join(",")).join("\n");
   const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv"}));a.download="historial_aip_"+new Date().toISOString().slice(0,10)+".csv";a.click();
 };
-$("#btnReset").onclick=()=>{if(confirm("Esto borra todo el historial e inventario y restaura los datos de ejemplo. ¿Continuar?")){db=seed();save();sel.clear();render()}};
+$("#btnReset").onclick=()=>{if(confirm("Esto borra todo el historial e inventario y restaura los datos de ejemplo. ¿Continuar?")){db=seed();save();sel.clear();sync({action:"reset",inv:db.inv});render()}};
 
 function imprimir(id){
   const m=db.mov.find(x=>x.id===id);if(!m)return;
@@ -386,7 +397,7 @@ function tick(){$("#clock").innerHTML=new Date().toLocaleDateString("es-PE",{wee
 tick();setInterval(()=>{tick();renderActivos()},30000);
 
 fillTipos($("#fTipo"),true);fillTipos($("#iTipo"),true);fillTipos($("#adTipo"),false);
-defaults();render();
+defaults();render();setStatus();pull();setInterval(pull,20000);
 </script>
 </body>
 </html>
