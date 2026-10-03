@@ -1,0 +1,392 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AIP · Entrega de Recursos Tecnológicos</title>
+<style>
+:root{
+  --verde:#1f8a4c; --verde-osc:#14683a; --amarillo:#ffe600; --rojo:#d4202a; --celeste:#d9ecfa;
+  --bg:#f4f7f5; --card:#fff; --txt:#1c2a22; --muted:#66756c; --line:#dfe6e2;
+  --ok:#1f8a4c; --warn:#c98a00; --bad:#d4202a; --radius:12px;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--txt);font-size:15px}
+header{background:linear-gradient(135deg,var(--verde-osc),var(--verde));color:#fff;border-bottom:5px solid var(--amarillo)}
+.hwrap{max-width:1200px;margin:auto;padding:14px 16px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.hwrap img{height:64px}
+.hwrap h1{margin:0;font-size:1.25rem;line-height:1.2}
+.hwrap p{margin:2px 0 0;opacity:.9;font-size:.85rem}
+.hwrap .grow{flex:1}
+.clock{text-align:right;font-size:.85rem;opacity:.95}
+main{max-width:1200px;margin:auto;padding:16px}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:16px}
+.stat{background:var(--card);border-radius:var(--radius);padding:12px 14px;border:1px solid var(--line);border-left:5px solid var(--verde)}
+.stat b{display:block;font-size:1.7rem}
+.stat span{color:var(--muted);font-size:.8rem}
+.stat.y{border-left-color:var(--amarillo)} .stat.r{border-left-color:var(--rojo)} .stat.c{border-left-color:#4aa3df}
+nav{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+nav button{border:1px solid var(--line);background:var(--card);padding:10px 16px;border-radius:999px;font:inherit;font-weight:600;cursor:pointer;color:var(--txt)}
+nav button.on{background:var(--verde);color:#fff;border-color:var(--verde)}
+nav .badge{background:var(--rojo);color:#fff;border-radius:999px;font-size:.72rem;padding:1px 7px;margin-left:5px}
+section.panel{display:none} section.panel.on{display:block}
+.grid2{display:grid;grid-template-columns:1fr 1.2fr;gap:16px}
+@media(max-width:860px){.grid2{grid-template-columns:1fr}}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:16px}
+.card h2{margin:0 0 12px;font-size:1.05rem;color:var(--verde-osc)}
+label{display:block;font-size:.8rem;font-weight:600;color:var(--muted);margin:10px 0 4px}
+input,select,textarea{width:100%;padding:9px 10px;border:1px solid #c9d4ce;border-radius:8px;font:inherit;background:#fff}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--amarillo);border-color:var(--verde)}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.btn{border:0;border-radius:8px;padding:10px 16px;font:inherit;font-weight:700;cursor:pointer;background:var(--verde);color:#fff}
+.btn:hover{background:var(--verde-osc)} .btn.sec{background:#e8efeb;color:var(--txt)} .btn.sec:hover{background:#d8e3dd}
+.btn.red{background:var(--rojo)} .btn.sm{padding:6px 11px;font-size:.82rem}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;align-items:center}
+.toolbar input,.toolbar select{width:auto;flex:1;min-width:140px}
+.units{display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:8px;max-height:420px;overflow:auto;padding:2px}
+.unit{border:2px solid var(--line);border-radius:10px;padding:8px;text-align:center;cursor:pointer;background:#fff;user-select:none;font-size:.82rem}
+.unit .ic{font-size:1.5rem;display:block}
+.unit b{display:block}
+.unit.sel{border-color:var(--verde);background:#e6f6ec;box-shadow:0 0 0 2px var(--amarillo)}
+.unit.off{opacity:.45;cursor:not-allowed;background:#f1f1f1}
+.unit small{color:var(--muted)}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.chip{background:#e6f6ec;color:var(--verde-osc);border-radius:999px;padding:3px 10px;font-size:.78rem;font-weight:600}
+table{width:100%;border-collapse:collapse;font-size:.88rem}
+th{text-align:left;background:#eef3f0;color:var(--muted);font-size:.75rem;text-transform:uppercase;letter-spacing:.03em}
+th,td{padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+.tw{overflow:auto;border:1px solid var(--line);border-radius:var(--radius);background:#fff}
+.tag{display:inline-block;border-radius:999px;padding:2px 10px;font-size:.75rem;font-weight:700}
+.tag.disp{background:#dff3e7;color:var(--ok)} .tag.pres{background:#fff3c4;color:#8a6200}
+.tag.mant{background:#fde0e1;color:var(--bad)} .tag.late{background:var(--rojo);color:#fff}
+.empty{text-align:center;color:var(--muted);padding:30px}
+dialog{border:0;border-radius:var(--radius);padding:20px;max-width:440px;width:92%;box-shadow:0 10px 40px #0004}
+dialog::backdrop{background:#0006}
+dialog h3{margin:0 0 6px;color:var(--verde-osc)}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--verde-osc);color:#fff;padding:12px 20px;border-radius:10px;font-weight:600;opacity:0;pointer-events:none;transition:.3s;z-index:9}
+.toast.show{opacity:1}
+.toast.err{background:var(--rojo)}
+#acta{display:none}
+@media print{
+  body>*:not(#acta){display:none!important}
+  #acta{display:block;padding:30px;font-family:serif;color:#000}
+  #acta img{height:80px}
+  .firma{display:flex;justify-content:space-around;margin-top:80px}
+  .firma div{border-top:1px solid #000;padding-top:4px;width:40%;text-align:center}
+}
+</style>
+</head>
+<body>
+<header>
+  <div class="hwrap">
+    <img src="insignia.png" alt="Insignia I.E. 16210">
+    <div class="grow">
+      <h1>Aula de Innovación Pedagógica (AIP)</h1>
+      <p>I.E. 16210 «Alejandro Sánchez Arteaga» · Bagua Grande, Utcubamba — Control de entrega de recursos tecnológicos</p>
+    </div>
+    <div class="clock" id="clock"></div>
+  </div>
+</header>
+
+<main>
+  <div class="stats" id="stats"></div>
+
+  <nav id="tabs">
+    <button data-t="entrega" class="on">📤 Nueva entrega</button>
+    <button data-t="activos">📥 Devoluciones <span class="badge" id="bActivos">0</span></button>
+    <button data-t="inventario">🖥️ Inventario</button>
+    <button data-t="historial">📋 Historial</button>
+  </nav>
+
+  <!-- ENTREGA -->
+  <section class="panel on" id="p-entrega">
+    <div class="grid2">
+      <div class="card">
+        <h2>1 · Datos del solicitante</h2>
+        <label for="fNombre">Apellidos y nombres</label>
+        <input id="fNombre" placeholder="Ej. Pérez Díaz, María" autocomplete="off" list="dlPersonas">
+        <datalist id="dlPersonas"></datalist>
+        <div class="row">
+          <div><label for="fDni">DNI</label><input id="fDni" inputmode="numeric" maxlength="8" placeholder="8 dígitos"></div>
+          <div><label for="fRol">Tipo</label>
+            <select id="fRol"><option>Docente</option><option>Estudiante</option><option>Administrativo</option><option>Directivo</option></select></div>
+        </div>
+        <div class="row">
+          <div><label for="fGrado">Grado y sección</label><input id="fGrado" placeholder="Ej. 3° B (si aplica)"></div>
+          <div><label for="fArea">Área / Motivo</label><input id="fArea" placeholder="Ej. Comunicación"></div>
+        </div>
+        <div class="row">
+          <div><label for="fFecha">Fecha de devolución</label><input type="date" id="fFecha"></div>
+          <div><label for="fHora">Hora límite</label><input type="time" id="fHora"></div>
+        </div>
+        <label for="fObs">Observaciones (estado al entregar)</label>
+        <textarea id="fObs" rows="2" placeholder="Ej. Equipo en buen estado, con cargador"></textarea>
+      </div>
+
+      <div class="card">
+        <h2>2 · Seleccionar recursos disponibles</h2>
+        <div class="toolbar">
+          <select id="fTipo"></select>
+          <input id="fBuscar" placeholder="Buscar código…">
+        </div>
+        <div class="units" id="units"></div>
+        <label>Seleccionados (<span id="nSel">0</span>)</label>
+        <div class="chips" id="chips"></div>
+        <div style="margin-top:16px;display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn" id="btnEntregar">Registrar entrega</button>
+          <button class="btn sec" id="btnLimpiar">Limpiar</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ACTIVOS -->
+  <section class="panel" id="p-activos">
+    <div class="toolbar"><input id="aBuscar" placeholder="Buscar por nombre, DNI o código…"></div>
+    <div class="tw"><table>
+      <thead><tr><th>Solicitante</th><th>Recursos</th><th>Entregado</th><th>Devolver</th><th></th></tr></thead>
+      <tbody id="tbActivos"></tbody>
+    </table></div>
+  </section>
+
+  <!-- INVENTARIO -->
+  <section class="panel" id="p-inventario">
+    <div class="toolbar">
+      <input id="iBuscar" placeholder="Buscar código o descripción…">
+      <select id="iTipo"></select>
+      <select id="iEstado"><option value="">Todos los estados</option><option value="disp">Disponible</option><option value="pres">Prestado</option><option value="mant">En mantenimiento</option></select>
+      <button class="btn sm" id="btnAdd">+ Agregar recurso</button>
+    </div>
+    <div class="tw"><table>
+      <thead><tr><th>Código</th><th>Tipo</th><th>Descripción</th><th>Estado</th><th></th></tr></thead>
+      <tbody id="tbInv"></tbody>
+    </table></div>
+  </section>
+
+  <!-- HISTORIAL -->
+  <section class="panel" id="p-historial">
+    <div class="toolbar">
+      <input id="hBuscar" placeholder="Buscar nombre, DNI o código…">
+      <button class="btn sec sm" id="btnCsv">⬇ Exportar CSV</button>
+      <button class="btn red sm" id="btnReset">Restablecer datos</button>
+    </div>
+    <div class="tw"><table>
+      <thead><tr><th>Fecha</th><th>Solicitante</th><th>Recursos</th><th>Devuelto</th><th>Estado devolución</th><th></th></tr></thead>
+      <tbody id="tbHist"></tbody>
+    </table></div>
+  </section>
+</main>
+
+<!-- Dialog devolución -->
+<dialog id="dlgDev">
+  <h3>Registrar devolución</h3>
+  <p id="dvInfo" style="color:var(--muted);margin:0"></p>
+  <label for="dvEstado">Estado en que regresa</label>
+  <select id="dvEstado"><option value="ok">Bueno — sin novedad</option><option value="dano">Con daños — enviar a mantenimiento</option><option value="falta">Incompleto (falta accesorio)</option></select>
+  <label for="dvObs">Observaciones</label>
+  <textarea id="dvObs" rows="2"></textarea>
+  <div style="margin-top:14px;display:flex;gap:8px;justify-content:flex-end">
+    <button class="btn sec" id="dvCancel">Cancelar</button><button class="btn" id="dvOk">Confirmar devolución</button>
+  </div>
+</dialog>
+
+<!-- Dialog agregar -->
+<dialog id="dlgAdd">
+  <h3>Agregar recurso</h3>
+  <div class="row">
+    <div><label for="adTipo">Tipo</label><select id="adTipo"></select></div>
+    <div><label for="adCod">Código</label><input id="adCod" placeholder="Ej. LAP-31"></div>
+  </div>
+  <label for="adDesc">Descripción</label><input id="adDesc" placeholder="Marca / modelo / serie">
+  <div style="margin-top:14px;display:flex;gap:8px;justify-content:flex-end">
+    <button class="btn sec" id="adCancel">Cancelar</button><button class="btn" id="adOk">Guardar</button>
+  </div>
+</dialog>
+
+<div id="acta"></div>
+<div class="toast" id="toast"></div>
+
+<script>
+const TIPOS = {
+  LAP:{n:"Laptop",i:"💻"}, TAB:{n:"Tablet",i:"📱"}, PRY:{n:"Proyector",i:"📽️"},
+  CAM:{n:"Cámara web",i:"📷"}, PAR:{n:"Parlante",i:"🔊"}, ROU:{n:"Router / Extensión",i:"🔌"},
+  OTR:{n:"Otro",i:"🧰"}
+};
+const KEY="aip16210_v1";
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+
+function seed(){
+  const inv=[];
+  for(let i=1;i<=30;i++) inv.push({cod:"LAP-"+String(i).padStart(2,"0"),tipo:"LAP",desc:"Laptop XO / educativa",estado:i===29||i===30?"mant":"disp"});
+  for(let i=1;i<=6;i++) inv.push({cod:"TAB-"+String(i).padStart(2,"0"),tipo:"TAB",desc:"Tablet educativa",estado:"disp"});
+  for(let i=1;i<=3;i++) inv.push({cod:"PRY-0"+i,tipo:"PRY",desc:"Proyector multimedia",estado:"disp"});
+  for(let i=1;i<=2;i++) inv.push({cod:"CAM-0"+i,tipo:"CAM",desc:"Cámara web HD",estado:"disp"});
+  for(let i=1;i<=2;i++) inv.push({cod:"PAR-0"+i,tipo:"PAR",desc:"Parlante amplificado",estado:"disp"});
+  for(let i=1;i<=3;i++) inv.push({cod:"ROU-0"+i,tipo:"ROU",desc:"Extensión eléctrica / Router",estado:"disp"});
+  return {inv,mov:[]};
+}
+let db; try{db=JSON.parse(localStorage.getItem(KEY))}catch(e){}
+if(!db||!db.inv) db=seed();
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(db))}catch(e){}};
+
+let sel=new Set();
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,5);
+const fmt=d=>d?new Date(d).toLocaleString("es-PE",{dateStyle:"short",timeStyle:"short"}):"—";
+const tipoOf=c=>TIPOS[c.tipo]||TIPOS.OTR;
+const byCod=c=>db.inv.find(x=>x.cod===c);
+const dueDate=m=>m.limite?new Date(m.limite):null;
+const isLate=m=>!m.devuelto&&dueDate(m)&&dueDate(m)<new Date();
+
+function toast(t,err){const e=$("#toast");e.textContent=t;e.className="toast show"+(err?" err":"");clearTimeout(toast.t);toast.t=setTimeout(()=>e.className="toast",2800)}
+
+function render(){
+  // stats
+  const total=db.inv.length,disp=db.inv.filter(x=>x.estado==="disp").length,
+        pres=db.inv.filter(x=>x.estado==="pres").length,mant=db.inv.filter(x=>x.estado==="mant").length,
+        activos=db.mov.filter(m=>!m.devuelto),late=activos.filter(isLate).length;
+  $("#stats").innerHTML=`
+   <div class="stat c"><b>${total}</b><span>Recursos totales</span></div>
+   <div class="stat"><b>${disp}</b><span>Disponibles</span></div>
+   <div class="stat y"><b>${pres}</b><span>Prestados</span></div>
+   <div class="stat r"><b>${mant}</b><span>En mantenimiento</span></div>
+   <div class="stat r"><b>${late}</b><span>Con retraso</span></div>`;
+  $("#bActivos").textContent=activos.length;
+  renderUnits();renderActivos();renderInv();renderHist();
+  $("#dlPersonas").innerHTML=[...new Map(db.mov.map(m=>[m.dni,m])).values()].map(m=>`<option value="${esc(m.nombre)}">`).join("");
+}
+
+function fillTipos(el,all){el.innerHTML=(all?`<option value="">Todos los tipos</option>`:"")+Object.entries(TIPOS).map(([k,v])=>`<option value="${k}">${v.i} ${v.n}</option>`).join("")}
+
+function renderUnits(){
+  const t=$("#fTipo").value,q=$("#fBuscar").value.trim().toLowerCase();
+  const list=db.inv.filter(x=>x.estado==="disp"&&(!t||x.tipo===t)&&(!q||x.cod.toLowerCase().includes(q)||x.desc.toLowerCase().includes(q)));
+  $("#units").innerHTML=list.length?list.map(x=>`<div class="unit ${sel.has(x.cod)?"sel":""}" data-c="${x.cod}"><span class="ic">${tipoOf(x).i}</span><b>${x.cod}</b><small>${esc(tipoOf(x).n)}</small></div>`).join(""):`<div class="empty" style="grid-column:1/-1">No hay recursos disponibles</div>`;
+  $("#nSel").textContent=sel.size;
+  $("#chips").innerHTML=[...sel].map(c=>`<span class="chip">${c}</span>`).join("")||`<span style="color:var(--muted);font-size:.85rem">Ninguno</span>`;
+}
+
+function renderActivos(){
+  const q=$("#aBuscar").value.trim().toLowerCase();
+  const list=db.mov.filter(m=>!m.devuelto&&(!q||(m.nombre+m.dni+m.cods.join(" ")).toLowerCase().includes(q)));
+  $("#tbActivos").innerHTML=list.length?list.map(m=>`<tr>
+    <td><b>${esc(m.nombre)}</b><br><small>${esc(m.rol)} · DNI ${esc(m.dni)}${m.grado?" · "+esc(m.grado):""}</small></td>
+    <td>${m.cods.map(c=>`<span class="chip">${c}</span>`).join(" ")}</td>
+    <td>${fmt(m.fecha)}</td>
+    <td>${m.limite?fmt(m.limite):"—"} ${isLate(m)?'<span class="tag late">Retrasado</span>':""}</td>
+    <td style="white-space:nowrap"><button class="btn sm" data-dev="${m.id}">Devolver</button> <button class="btn sec sm" data-acta="${m.id}">🖨 Acta</button></td></tr>`).join(""):`<tr><td colspan="5" class="empty">No hay entregas pendientes de devolución</td></tr>`;
+}
+
+function renderInv(){
+  const q=$("#iBuscar").value.trim().toLowerCase(),t=$("#iTipo").value,e=$("#iEstado").value;
+  const names={disp:"Disponible",pres:"Prestado",mant:"Mantenimiento"};
+  const list=db.inv.filter(x=>(!t||x.tipo===t)&&(!e||x.estado===e)&&(!q||(x.cod+x.desc).toLowerCase().includes(q)));
+  $("#tbInv").innerHTML=list.length?list.map(x=>`<tr><td><b>${x.cod}</b></td><td>${tipoOf(x).i} ${tipoOf(x).n}</td><td>${esc(x.desc)}</td>
+   <td><span class="tag ${x.estado}">${names[x.estado]}</span></td>
+   <td style="white-space:nowrap">${x.estado==="disp"?`<button class="btn sec sm" data-mant="${x.cod}">A mantenimiento</button>`:x.estado==="mant"?`<button class="btn sec sm" data-fix="${x.cod}">Marcar reparado</button>`:""}
+   ${x.estado!=="pres"?`<button class="btn sec sm" data-del="${x.cod}" title="Eliminar">🗑</button>`:""}</td></tr>`).join(""):`<tr><td colspan="5" class="empty">Sin resultados</td></tr>`;
+}
+
+function renderHist(){
+  const q=$("#hBuscar").value.trim().toLowerCase();
+  const est={ok:"Bueno",dano:"Con daños",falta:"Incompleto"};
+  const list=[...db.mov].reverse().filter(m=>!q||(m.nombre+m.dni+m.cods.join(" ")).toLowerCase().includes(q));
+  $("#tbHist").innerHTML=list.length?list.map(m=>`<tr><td>${fmt(m.fecha)}</td>
+   <td><b>${esc(m.nombre)}</b><br><small>${esc(m.rol)} · DNI ${esc(m.dni)}</small></td>
+   <td>${m.cods.map(c=>`<span class="chip">${c}</span>`).join(" ")}</td>
+   <td>${m.devuelto?fmt(m.devuelto):'<span class="tag pres">Pendiente</span>'}</td>
+   <td>${m.devuelto?`${est[m.estadoDev]}${m.obsDev?"<br><small>"+esc(m.obsDev)+"</small>":""}`:"—"}</td>
+   <td><button class="btn sec sm" data-acta="${m.id}">🖨</button></td></tr>`).join(""):`<tr><td colspan="6" class="empty">Aún no hay movimientos registrados</td></tr>`;
+}
+
+// ---- eventos
+$("#tabs").onclick=e=>{const b=e.target.closest("button");if(!b)return;
+  $$("#tabs button").forEach(x=>x.classList.toggle("on",x===b));
+  $$(".panel").forEach(p=>p.classList.toggle("on",p.id==="p-"+b.dataset.t))};
+
+$("#units").onclick=e=>{const u=e.target.closest(".unit");if(!u)return;const c=u.dataset.c;sel.has(c)?sel.delete(c):sel.add(c);renderUnits()};
+["#fTipo","#fBuscar"].forEach(s=>$(s).oninput=renderUnits);
+["#aBuscar"].forEach(s=>$(s).oninput=renderActivos);
+["#iBuscar","#iTipo","#iEstado"].forEach(s=>$(s).oninput=renderInv);
+$("#hBuscar").oninput=renderHist;
+
+function limpiar(){sel.clear();["#fNombre","#fDni","#fGrado","#fArea","#fObs"].forEach(s=>$(s).value="");$("#fRol").selectedIndex=0;defaults();renderUnits()}
+function defaults(){const d=new Date();$("#fFecha").value=d.toISOString().slice(0,10);$("#fHora").value="13:00"}
+$("#btnLimpiar").onclick=limpiar;
+
+$("#fNombre").onchange=()=>{const m=[...db.mov].reverse().find(x=>x.nombre.toLowerCase()===$("#fNombre").value.trim().toLowerCase());
+  if(m){$("#fDni").value=m.dni;$("#fRol").value=m.rol;if(m.grado)$("#fGrado").value=m.grado}};
+
+$("#btnEntregar").onclick=()=>{
+  const nombre=$("#fNombre").value.trim(),dni=$("#fDni").value.trim();
+  if(!nombre) return toast("Ingrese el nombre del solicitante",1);
+  if(!/^\d{8}$/.test(dni)) return toast("El DNI debe tener 8 dígitos",1);
+  if(!sel.size) return toast("Seleccione al menos un recurso",1);
+  const limite=$("#fFecha").value?`${$("#fFecha").value}T${$("#fHora").value||"23:59"}`:"";
+  if(limite&&new Date(limite)<new Date()) return toast("La fecha de devolución ya pasó",1);
+  const m={id:uid(),nombre,dni,rol:$("#fRol").value,grado:$("#fGrado").value.trim(),area:$("#fArea").value.trim(),
+    obs:$("#fObs").value.trim(),cods:[...sel],fecha:new Date().toISOString(),limite,devuelto:null};
+  m.cods.forEach(c=>{const x=byCod(c);if(x)x.estado="pres"});
+  db.mov.push(m);save();limpiar();render();toast("Entrega registrada ✔");
+  if(confirm("¿Imprimir el acta de entrega?")) imprimir(m.id);
+};
+
+let devId=null;
+document.addEventListener("click",e=>{
+  const g=a=>e.target.closest(`[${a}]`)?.getAttribute(a);
+  if(g("data-dev")){devId=g("data-dev");const m=db.mov.find(x=>x.id===devId);
+    $("#dvInfo").textContent=`${m.nombre} — ${m.cods.join(", ")}`;$("#dvEstado").value="ok";$("#dvObs").value="";$("#dlgDev").showModal()}
+  else if(g("data-acta")) imprimir(g("data-acta"));
+  else if(g("data-mant")){byCod(g("data-mant")).estado="mant";save();render()}
+  else if(g("data-fix")){byCod(g("data-fix")).estado="disp";save();render()}
+  else if(g("data-del")){const c=g("data-del");if(confirm("¿Eliminar "+c+" del inventario?")){db.inv=db.inv.filter(x=>x.cod!==c);sel.delete(c);save();render()}}
+});
+$("#dvCancel").onclick=()=>$("#dlgDev").close();
+$("#dvOk").onclick=()=>{
+  const m=db.mov.find(x=>x.id===devId);if(!m)return;
+  m.devuelto=new Date().toISOString();m.estadoDev=$("#dvEstado").value;m.obsDev=$("#dvObs").value.trim();
+  m.cods.forEach(c=>{const x=byCod(c);if(x)x.estado=m.estadoDev==="dano"?"mant":"disp"});
+  save();$("#dlgDev").close();render();toast("Devolución registrada ✔");
+};
+
+$("#btnAdd").onclick=()=>{$("#adCod").value="";$("#adDesc").value="";$("#dlgAdd").showModal()};
+$("#adCancel").onclick=()=>$("#dlgAdd").close();
+$("#adOk").onclick=()=>{
+  const cod=$("#adCod").value.trim().toUpperCase(),desc=$("#adDesc").value.trim();
+  if(!cod) return toast("Ingrese un código",1);
+  if(byCod(cod)) return toast("Ese código ya existe",1);
+  db.inv.push({cod,tipo:$("#adTipo").value,desc:desc||tipoOf({tipo:$("#adTipo").value}).n,estado:"disp"});
+  save();$("#dlgAdd").close();render();toast("Recurso agregado ✔");
+};
+
+$("#btnCsv").onclick=()=>{
+  const rows=[["Fecha entrega","Nombre","DNI","Tipo","Grado","Área","Recursos","Límite","Devuelto","Estado devolución","Obs. entrega","Obs. devolución"]];
+  db.mov.forEach(m=>rows.push([m.fecha,m.nombre,m.dni,m.rol,m.grado,m.area,m.cods.join(" "),m.limite,m.devuelto||"",m.estadoDev||"",m.obs,m.obsDev||""]));
+  const csv="﻿"+rows.map(r=>r.map(v=>`"${String(v??"").replace(/"/g,'""')}"`).join(",")).join("\n");
+  const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv"}));a.download="historial_aip_"+new Date().toISOString().slice(0,10)+".csv";a.click();
+};
+$("#btnReset").onclick=()=>{if(confirm("Esto borra todo el historial e inventario y restaura los datos de ejemplo. ¿Continuar?")){db=seed();save();sel.clear();render()}};
+
+function imprimir(id){
+  const m=db.mov.find(x=>x.id===id);if(!m)return;
+  $("#acta").innerHTML=`<div style="text-align:center"><img src="insignia.png"><h2 style="margin:6px 0 0">I.E. 16210 «Alejandro Sánchez Arteaga»</h2>
+   <div>Aula de Innovación Pedagógica — Acta de entrega de recursos tecnológicos</div></div><hr>
+   <p><b>Solicitante:</b> ${esc(m.nombre)} &nbsp; <b>DNI:</b> ${esc(m.dni)}<br><b>Tipo:</b> ${esc(m.rol)} ${m.grado?"&nbsp; <b>Grado:</b> "+esc(m.grado):""} ${m.area?"&nbsp; <b>Área:</b> "+esc(m.area):""}</p>
+   <p><b>Fecha de entrega:</b> ${fmt(m.fecha)}<br><b>Devolución prevista:</b> ${m.limite?fmt(m.limite):"—"}</p>
+   <table border="1" cellspacing="0" cellpadding="6" style="width:100%"><tr><th>N.º</th><th>Código</th><th>Recurso</th><th>Descripción</th></tr>
+   ${m.cods.map((c,i)=>{const x=byCod(c)||{tipo:"OTR",desc:""};return `<tr><td>${i+1}</td><td>${c}</td><td>${tipoOf(x).n}</td><td>${esc(x.desc)}</td></tr>`}).join("")}</table>
+   <p><b>Observaciones:</b> ${esc(m.obs)||"Ninguna"}</p>
+   <p style="font-size:.85rem">El solicitante se hace responsable del cuidado de los equipos y se compromete a devolverlos en la fecha indicada y en buen estado.</p>
+   <div class="firma"><div>Responsable del AIP</div><div>Solicitante</div></div>`;
+  window.print();
+}
+
+function tick(){$("#clock").innerHTML=new Date().toLocaleDateString("es-PE",{weekday:"long",day:"numeric",month:"long",year:"numeric"})+"<br><b>"+new Date().toLocaleTimeString("es-PE",{hour:"2-digit",minute:"2-digit"})+"</b>"}
+tick();setInterval(()=>{tick();renderActivos()},30000);
+
+fillTipos($("#fTipo"),true);fillTipos($("#iTipo"),true);fillTipos($("#adTipo"),false);
+defaults();render();
+</script>
+</body>
+</html>
