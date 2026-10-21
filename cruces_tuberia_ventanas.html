@@ -1,0 +1,207 @@
+<title>Cruces Tubería Ventanas</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@400;600&display=swap">
+<style>
+/* Layout: lista de cruces a la izquierda, elevaciones de muro a la derecha, resumen de metrado abajo. */
+:root{
+  --bg:#eef0ee; --panel:#ffffff; --fg:#1b2420; --muted:#5d6b64; --line:#cfd6d1; --accent:#0b6e4f;
+  --wall:#e4e0d4; --win:#a9bf9a; --win-line:#6b4a22; --door:#b98a57; --ok:#12805a; --bad:#cf2f2f; --pipe:#e07b00; --sheet:#f6f7f5;
+  --display:"IBM Plex Sans Condensed","Arial Narrow",sans-serif; --mono:"IBM Plex Mono",ui-monospace,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#121815; --panel:#1b2420; --fg:#e8eeea; --muted:#93a39a; --line:#2f3b35; --accent:#4fd1a1;
+  --wall:#2b332e; --win:#4d6a4a; --win-line:#c19a63; --door:#7a5a38; --ok:#4fd1a1; --bad:#ff6b6b; --pipe:#ffa733; --sheet:#161e1a; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#121815; --panel:#1b2420; --fg:#e8eeea; --muted:#93a39a; --line:#2f3b35; --accent:#4fd1a1;
+  --wall:#2b332e; --win:#4d6a4a; --win-line:#c19a63; --door:#7a5a38; --ok:#4fd1a1; --bad:#ff6b6b; --pipe:#ffa733; --sheet:#161e1a; color-scheme:dark}
+body{background:var(--bg);color:var(--fg);font:14px/1.45 var(--display);margin:0;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:16px}
+.wrap{max-width:1280px;margin:0 auto;display:grid;gap:14px}
+header h1{font-size:24px;line-height:1.15;margin:0;font-weight:600;text-wrap:balance}
+header p{margin:4px 0 0;color:var(--muted);max-width:75ch}
+.grid{display:grid;grid-template-columns:minmax(0,380px) minmax(0,1fr);gap:14px;align-items:start}
+.panel{background:var(--panel);border:1px solid var(--line);padding:14px;min-width:0}
+h2{font:500 11px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin:0 0 10px}
+.cross{border:1px solid var(--line);padding:10px;margin-bottom:10px;display:grid;gap:6px}
+.cross.bad{border-color:var(--bad)}
+.cross.ok{border-color:var(--ok)}
+.cross .top{display:flex;justify-content:space-between;gap:8px;align-items:baseline;flex-wrap:wrap}
+.cross b{font-weight:600}
+.tag{font:500 11px var(--mono);padding:2px 6px;border:1px solid currentColor;white-space:nowrap}
+.tag.bad{color:var(--bad)} .tag.ok{color:var(--ok)}
+.meta{font:12px var(--mono);color:var(--muted)}
+.opts{display:grid;gap:4px}
+.opts label{display:flex;gap:8px;align-items:flex-start;cursor:pointer;font-size:13px}
+.opts input{margin-top:3px;accent-color:var(--accent)}
+.opts .dis{color:var(--muted);cursor:not-allowed}
+.sl{display:flex;gap:8px;align-items:center;font:12px var(--mono);color:var(--muted)}
+.sl input{flex:1;accent-color:var(--accent)}
+.svgbox{overflow-x:auto;border:1px solid var(--line);background:var(--sheet);margin-bottom:12px}
+.svgbox h3{margin:0;padding:8px 10px 0;font:500 12px var(--mono);color:var(--muted)}
+svg{display:block}
+svg text{font-family:var(--mono);fill:var(--muted);font-size:10px}
+table{border-collapse:collapse;width:100%;font-size:13px}
+th,td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font:500 11px var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.tw{overflow-x:auto}
+.num{font-variant-numeric:tabular-nums;font-family:var(--mono)}
+button{font:500 12px var(--mono);background:transparent;color:var(--fg);border:1px solid var(--line);padding:7px 10px;cursor:pointer}
+button:hover,button:focus-visible{border-color:var(--accent);color:var(--accent);outline:none}
+.notes{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
+.notes p{margin:0;color:var(--muted);font-size:13px}
+.notes b{color:var(--fg)}
+@media(max-width:860px){.grid{grid-template-columns:1fr}}
+</style>
+
+<div class="wrap">
+<header>
+  <h1>Cruces de tubería con ventanas</h1>
+  <p>Residencia estudiantil I.E. N°16722, dormitorio de mujeres. Las ventanas tienen alféizar a 2.40 m y llegan a 3.09 m, justo donde las ramas de C1, C2 y C3 atraviesan el muro (2.99 a 3.09 m). Elija cómo resolver cada cruce y revise el efecto en la elevación.</p>
+</header>
+
+<div class="grid">
+  <section class="panel">
+    <h2>Cruces detectados</h2>
+    <div id="list"></div>
+    <div class="sl" style="margin-top:4px">Margen mínimo al borde de la ventana <input type="range" id="margin" min="0.1" max="0.5" step="0.05" value="0.2"><span id="marginV" class="num">0.20 m</span></div>
+  </section>
+  <section>
+    <div id="views"></div>
+  </section>
+</div>
+
+<section class="panel">
+  <h2>Resumen de la solución elegida</h2>
+  <div class="tw"><table><thead><tr><th>Cruce</th><th>Solución</th><th>Cruza el muro en</th><th>Conduit adicional</th><th>Estado</th></tr></thead><tbody id="sum"></tbody></table></div>
+  <p class="meta" id="tot" style="margin:10px 0"></p>
+  <button id="copy">Copiar resumen para el proyectista</button> <span class="meta" id="copied"></span>
+</section>
+
+<section class="panel">
+  <h2>Cómo se resuelve</h2>
+  <div class="notes">
+    <p><b>Bajar bajo el alféizar.</b> La tubería baja por el interior hasta 2.30 m, atraviesa el muro con un pasamuros y sale casi a la altura de la luminaria exterior (2.20 m). El largo total de conduit no cambia, porque la bajada que antes se hacía afuera ahora se hace adentro.</p>
+    <p><b>Mover a un tramo ciego.</b> Solo sirve donde queda muro macizo entre ventanas. En el dormitorio las ventanas casi no dejan tramos ciegos, por eso la mayoría de cruces no tiene esta opción.</p>
+    <p><b>Pasar por encima.</b> No es posible: la ventana llega a 3.09 m, que es el borde superior del muro.</p>
+    <p><b>Antes de ejecutar.</b> Esta es una propuesta de trabajo, no un cambio aprobado. El proyectista de instalaciones debe validar el recorrido, el pasamuros y el sellado. No se debe cortar el bastidor de madera ni la malla mosquitera.</p>
+  </div>
+</section>
+</div>
+
+<script>
+const S=0.01348, SILL=2.4, TOP=3.09, PIPE=2.99;
+const AX=x=>95+1.353*(x-480), M=px=>(px-95)*S;       // plano de arquitectura (pt) a metros desde el muro oeste
+const mw=(tag,xpt,w)=>({tag,c:M(AX(xpt)),w});
+const walls={
+  N:{name:'Dormitorio, muro norte (eje B)',L:21.5,
+     win:[...[719,886,1050,1214,1379].map(x=>mw('V5',x,2.85)),mw('V8',592,1.70),mw('V9',508,1.0),mw('V9',1496,1.0),mw('V6',1590,2.35)],
+     door:[{c:M(AX(508)),w:1.0},{c:M(AX(1497)),w:1.0}]},
+  S:{name:'Dormitorio, muro sur (eje A)',L:21.5,
+     win:[...[731,894,1058,1220,1387].map(x=>mw('V5',x,2.85)),mw('V8',591,1.70),mw('V9',508,1.0),mw('V9',1628,1.0)],
+     door:[{c:M(AX(509)),w:1.0},{c:M(AX(1629)),w:1.0}]},
+  E:{name:'Sala de estudio, muro este (eje 8)',L:5.39,
+     win:[{tag:'V1',c:2.70,w:5.20}],door:[]}
+};
+const crossings=[
+  {id:'E-N1',wall:'N',pos:M(245),h:PIPE,out:2.2,circuit:'C1',what:'Luz de emergencia exterior, vereda norte'},
+  {id:'E-N2',wall:'N',pos:M(1385),h:PIPE,out:2.2,circuit:'C1',what:'Luz de emergencia exterior, vereda norte'},
+  {id:'E-S1',wall:'S',pos:M(390),h:PIPE,out:2.2,circuit:'C1',what:'Luz de emergencia exterior, vereda sur'},
+  {id:'E-S2',wall:'S',pos:M(1385),h:PIPE,out:2.2,circuit:'C1',what:'Luz de emergencia exterior, vereda sur'},
+  {id:'TG-E2',wall:'E',pos:0.20,h:3.04,out:3.04,circuit:'C2',what:'Alimentador de pasadizos desde el TG'},
+  {id:'TG-E3',wall:'E',pos:0.20,h:3.09,out:3.09,circuit:'C3',what:'Alimentador del bloque de SS.HH. desde el TG'}
+];
+const st={};crossings.forEach(c=>st[c.id]={mode:'actual',hUnder:2.30});
+let margin=.2;
+
+const hitWin=(w,pos,h,m)=>w.win.find(x=>Math.abs(pos-x.c)<=x.w/2+m && h>SILL-.1+.0001 && h<TOP+.05);
+function freeIntervals(w,m){ // tramos ciegos: fuera de ventanas con margen, lejos de esquinas
+  const iv=w.win.map(x=>[x.c-x.w/2-m,x.c+x.w/2+m]).sort((a,b)=>a[0]-b[0]);
+  const out=[];let cur=.3;
+  iv.forEach(([a,b])=>{if(a>cur)out.push([cur,a]);cur=Math.max(cur,b);});
+  if(cur<w.L-.3)out.push([cur,w.L-.3]);
+  return out.filter(([a,b])=>b-a>=.05);
+}
+function nearestFree(w,pos){
+  let best=null;
+  freeIntervals(w,margin).forEach(([a,b])=>{const p=Math.min(Math.max(pos,a),b),d=Math.abs(p-pos);if(!best||d<best.d)best={p,d};});
+  return best;
+}
+function resolve(c){
+  const w=walls[c.wall],s=st[c.id];let pos=c.pos,h=c.h,extra=0,note='';
+  if(s.mode==='move'){const n=nearestFree(w,c.pos);if(n){pos=n.p;extra=n.d;}}
+  if(s.mode==='under'){h=s.hUnder;note='bajada interior '+(c.h-h).toFixed(2)+' m, pasamuros';}
+  const hit=hitWin(w,pos,h,s.mode==='move'?margin:0);
+  return {pos,h,extra,hit,note,ok:!hit};
+}
+
+function renderList(){
+  const el=document.getElementById('list');el.innerHTML='';
+  crossings.forEach(c=>{
+    const w=walls[c.wall],s=st[c.id],r=resolve(c),mv=nearestFree(w,c.pos);
+    const d=document.createElement('div');d.className='cross '+(r.ok?'ok':'bad');
+    const mvTxt=mv?`Mover a un tramo ciego (${mv.d.toFixed(2)} m, cruza en x = ${mv.p.toFixed(2)} m)`:'Mover a un tramo ciego (no hay tramo libre)';
+    d.innerHTML=`<div class="top"><b>${c.id} · ${c.circuit}</b><span class="tag ${r.ok?'ok':'bad'}">${r.ok?'SIN CRUCE':'CRUZA VENTANA '+r.hit.tag}</span></div>
+      <div class="meta">${w.name} · ${c.what}</div>
+      <div class="opts">
+        <label><input type="radio" name="m_${c.id}" value="actual" ${s.mode==='actual'?'checked':''}>Como está en el plano: x = ${c.pos.toFixed(2)} m, h = ${c.h.toFixed(2)} m</label>
+        <label class="${mv&&mv.d<6?'':'dis'}"><input type="radio" name="m_${c.id}" value="move" ${s.mode==='move'?'checked':''} ${mv&&mv.d<6?'':'disabled'}>${mvTxt}</label>
+        <label><input type="radio" name="m_${c.id}" value="under" ${s.mode==='under'?'checked':''}>Bajar bajo el alféizar y cruzar a ${s.hUnder.toFixed(2)} m</label>
+      </div>
+      ${s.mode==='under'?`<div class="sl">Altura de cruce <input type="range" min="1.9" max="2.35" step="0.05" value="${s.hUnder}" data-h="${c.id}"><span class="num">${s.hUnder.toFixed(2)} m</span></div>`:''}`;
+    el.appendChild(d);
+    d.querySelectorAll('input[type=radio]').forEach(i=>i.onchange=()=>{s.mode=i.value;update();});
+    const sl=d.querySelector('[data-h]');if(sl)sl.oninput=()=>{s.hUnder=+sl.value;update();};
+  });
+}
+
+const PXM=36;
+function svgWall(key){
+  const w=walls[key],W=w.L*PXM+70,H=3.7*PXM+44,x0=48,yb=H-26,Y=h=>yb-h*PXM;
+  let g=`<rect x="${x0}" y="${Y(TOP)}" width="${w.L*PXM}" height="${TOP*PXM}" fill="var(--wall)" stroke="var(--line)"/>`;
+  w.door.forEach(d=>g+=`<rect x="${x0+(d.c-d.w/2)*PXM}" y="${Y(2.4)}" width="${d.w*PXM}" height="${2.4*PXM}" fill="var(--door)" stroke="var(--win-line)"/>`);
+  w.win.forEach(x=>{
+    const px=x0+(x.c-x.w/2)*PXM,pw=x.w*PXM;
+    g+=`<rect x="${px}" y="${Y(TOP)}" width="${pw}" height="${(TOP-SILL)*PXM}" fill="var(--win)" stroke="var(--win-line)"/>`;
+    if(pw>40)g+=`<text x="${px+pw/2}" y="${Y(TOP)+(TOP-SILL)*PXM/2+3}" text-anchor="middle">${x.tag}</text>`;
+  });
+  // cotas de altura
+  [[0,'0.00'],[SILL,'2.40'],[TOP,'3.09']].forEach(([h,t])=>g+=`<line x1="${x0-6}" x2="${x0}" y1="${Y(h)}" y2="${Y(h)}" stroke="var(--muted)"/><text x="${x0-9}" y="${Y(h)+3}" text-anchor="end">${t}</text>`);
+  for(let m=0;m<=w.L;m+=3)g+=`<line x1="${x0+m*PXM}" x2="${x0+m*PXM}" y1="${yb}" y2="${yb+5}" stroke="var(--muted)"/><text x="${x0+m*PXM}" y="${yb+16}" text-anchor="middle">${m}</text>`;
+  g+=`<line x1="${x0}" x2="${x0+w.L*PXM}" y1="${yb}" y2="${yb}" stroke="var(--fg)"/>`;
+  // cruces
+  crossings.filter(c=>c.wall===key).forEach(c=>{
+    const r=resolve(c),cx=x0+r.pos*PXM,cy=Y(r.h),col=r.ok?'var(--ok)':'var(--bad)';
+    if(r.pos!==c.pos||r.h!==c.h)g+=`<circle cx="${x0+c.pos*PXM}" cy="${Y(c.h)}" r="4" fill="none" stroke="var(--muted)" stroke-dasharray="2 2"/><line x1="${x0+c.pos*PXM}" y1="${Y(c.h)}" x2="${cx}" y2="${cy}" stroke="var(--muted)" stroke-dasharray="2 2"/>`;
+    g+=`<circle cx="${cx}" cy="${cy}" r="6" fill="${col}" stroke="var(--panel)" stroke-width="1.5"/><text x="${cx}" y="${cy-10}" text-anchor="middle" style="fill:${col}">${c.id}</text>`;
+    if(r.h<c.h-.001)g+=`<line x1="${cx}" x2="${cx}" y1="${Y(c.h)}" y2="${cy}" stroke="var(--pipe)" stroke-width="2.5"/>`;
+  });
+  const h3=key==='E'?'distancia desde el eje B hacia el sur (m)':'distancia desde el muro oeste (m)';
+  return `<div class="svgbox"><h3>${w.name}, ${h3}</h3><svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="Elevación ${w.name}">${g}</svg></div>`;
+}
+
+function renderViews(){document.getElementById('views').innerHTML=['N','S','E'].map(svgWall).join('');}
+function renderSum(){
+  const rows=[],txt=[];let extra=0,bad=0,pas=0;
+  crossings.forEach(c=>{
+    const s=st[c.id],r=resolve(c);extra+=r.extra;if(!r.ok)bad++;if(s.mode==='under')pas++;
+    const sol=s.mode==='actual'?'Sin cambio':s.mode==='move'?'Mover a tramo ciego':'Bajar bajo el alféizar';
+    const det=s.mode==='under'?'Neutro (la bajada pasa al interior)':s.mode==='move'?'+'+r.extra.toFixed(2)+' m':'0.00 m';
+    rows.push(`<tr><td><b>${c.id}</b> ${c.circuit}</td><td>${sol}</td><td class="num">x ${r.pos.toFixed(2)} m, h ${r.h.toFixed(2)} m</td><td class="num">${det}</td><td style="color:${r.ok?'var(--ok)':'var(--bad)'}">${r.ok?'Sin cruce':'Cruza '+r.hit.tag}</td></tr>`);
+    txt.push(`${c.id} (${c.circuit}, ${walls[c.wall].name}): ${sol.toLowerCase()}, cruce en x ${r.pos.toFixed(2)} m a h ${r.h.toFixed(2)} m, ${r.ok?'sin cruce con ventana':'cruza ventana '+r.hit.tag}.`);
+  });
+  document.getElementById('sum').innerHTML=rows.join('');
+  document.getElementById('tot').textContent=`${bad===0?'Todos los cruces resueltos':bad+' cruce(s) sin resolver'} · pasamuros nuevos: ${pas} · conduit adicional por desplazamientos: ${extra.toFixed(2)} m`;
+  window.__txt='Cruces de tubería con ventanas, residencia I.E. 16722, dormitorio de mujeres.\n'+txt.join('\n')+'\n'+document.getElementById('tot').textContent;
+}
+function update(){renderList();renderViews();renderSum();
+  try{localStorage.setItem('cruces',JSON.stringify({st,margin}));}catch(e){}}
+try{const sv=JSON.parse(localStorage.getItem('cruces')||'null');if(sv){Object.keys(sv.st||{}).forEach(k=>{if(st[k])Object.assign(st[k],sv.st[k]);});if(sv.margin)margin=sv.margin;}}catch(e){}
+const mg=document.getElementById('margin');mg.value=margin;
+const mgv=document.getElementById('marginV');mgv.textContent=margin.toFixed(2)+' m';
+mg.oninput=()=>{margin=+mg.value;mgv.textContent=margin.toFixed(2)+' m';update();};
+document.getElementById('copy').onclick=async()=>{
+  const el=document.getElementById('copied');
+  try{await navigator.clipboard.writeText(window.__txt);el.textContent='Copiado';}
+  catch(e){el.textContent='No se pudo copiar; seleccione el texto de la tabla.';}
+  setTimeout(()=>el.textContent='',2500);};
+update();
+</script>
