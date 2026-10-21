@@ -96,7 +96,7 @@ function wall(x0,y0,x1,y1,t=7,h=H){ // línea de muro
   if(x0===x1)box(groups.walls,x0-t/2,y0,x0+t/2,y1,h,wallM);else box(groups.walls,x0,y0-t/2,x1,y0+t/2,h,wallM);}
 // piso
 box(groups.walls,95,30,1600,430,.06,floorM,-.06);
-box(groups.walls,740,-445,1870,-130,.06,mat(0xa9b4b0),-.06);
+box(groups.walls,740,-445,1760,-130,.06,mat(0xa9b4b0),-.06);
 box(groups.walls,10,-445,590,-130,.06,mat(0x9aa59d),-.06);
 box(groups.walls,-30,470-35,1760,500,.04,mat(0xc2c6c0),-.06); // vereda sur
 // muros dormitorio
@@ -105,8 +105,8 @@ wall(310,30,310,150);wall(310,230,310,430);           // sala de estar (vano de 
 wall(1425,30,1425,190);wall(1425,300,1425,430);       // sala de estudio
 // muros bloque húmedo
 const wy=y=>y-490;
-wall(740,wy(45),1870,wy(45));wall(740,wy(360),1870,wy(360));wall(740,wy(45),740,wy(360));wall(1870,wy(45),1870,wy(360));
-wall(1265,wy(45),1265,wy(360));wall(1580,wy(120),1580,wy(300));wall(745,wy(205),860,wy(205));wall(860,wy(205),860,wy(330));
+wall(740,wy(45),1760,wy(45));wall(740,wy(360),1760,wy(360));wall(740,wy(45),740,wy(360));wall(1760,wy(45),1760,wy(360));
+wall(1265,wy(45),1265,wy(360));wall(1648,wy(212),1648,wy(360));wall(1587,wy(212),1648,wy(212));wall(745,wy(205),860,wy(205));wall(860,wy(205),860,wy(330));
 // cabinas
 [[1400,1475,1560,1640],[]].flat();
 [1340,1415,1490,1565].forEach(x=>{wall(x,wy(45),x,wy(150),4,2.4);wall(x,wy(260),x,wy(360),4,2.4);});
@@ -120,7 +120,7 @@ function roof(x0,x1,y0,y1,rh){
   const g=new THREE.ExtrudeGeometry(sh,{depth:w+1,bevelEnabled:false});
   const m=new THREE.Mesh(g,mat(0x7b8f9a,{transparent:true,opacity:.35,side:THREE.DoubleSide,depthWrite:false}));
   m.rotation.y=Math.PI/2;m.position.set(X(x0)-.5,H,Z((y0+y1)/2));groups.roof.add(m);}
-roof(95,1600,30,430,1.4);roof(740,1870,-445,-130,1.2);
+roof(95,1600,30,430,1.4);roof(740,1760,-445,-130,1.2);
 groups.roof.visible=false;
 
 // mobiliario
@@ -234,7 +234,7 @@ function windowAt(x0,x1,y,sill=SILL,h=WH,panes=1,mesh=false){ // y en px, muro h
 // dormitorio: muros norte (y=30) y sur (y=430) por tramos entre ejes
 [[130,285],[345,515],[570,740],[790,960],[1010,1185],[1240,1410],[1470,1585]].forEach(([a,b])=>{windowAt(a,b,30);windowAt(a,b,430);});
 // bloque húmedo (corte I-06): bastidor de madera con malla mosquitera sobre los tabiques de 2.40 m, 3 paños por tramo
-[[760,935],[950,1125],[1145,1255],[1275,1335],[1350,1575],[1590,1800]].forEach(([a,b])=>{windowAt(a,b,wy(45),2.4,.55,3,true);windowAt(a,b,wy(360),2.4,.55,3,true);});
+[[760,935],[950,1125],[1145,1255],[1275,1335],[1350,1575],[1590,1745]].forEach(([a,b])=>{windowAt(a,b,wy(45),2.4,.55,3,true);windowAt(a,b,wy(360),2.4,.55,3,true);});
 // cruces tubería-ventana
 function clashes(){
   let n=0;const hit=new Set();
@@ -283,11 +283,13 @@ door(310,150,310,215,1,0);     // sala de estar a dormitorio
 door(1425,200,1425,265,-1,0);  // dormitorio a sala de estudio
 door(1445,30,1510,30,0,1);     // sala de estudio, norte
 door(1520,430,1585,430,0,-1);  // sala de estudio, sur
-// bloque húmedo
-door(860,wy(245),860,wy(310),-1,0);    // dep. limpieza
-door(870,wy(360),935,wy(360),0,-1);    // duchas + vestidor
-door(1265,wy(290),1265,wy(350),-1,0);  // paso duchas a SS.HH.
-door(1625,wy(360),1690,wy(360),0,-1);  // depósito
+// bloque húmedo (posiciones tomadas de los arcos de giro del plano IE-01)
+door(748,wy(360),807,wy(360),0,-1);    // dep. limpieza, desde el pasadizo
+door(875,wy(360),949,wy(360),0,-1);    // duchas + vestidor
+door(860,wy(45),817,wy(45),0,1,1.5,stallM);    // cubículo de ducha norte
+door(860,wy(197),817,wy(197),0,-1,1.5,stallM); // cubículo de ducha sur
+door(1642,wy(360),1590,wy(360),0,-1);  // ingreso a SS.HH.
+door(1727,wy(360),1678,wy(360),0,-1);  // depósito
 // puertas de cubículo 1.50 × 0.60 m
 [1340,1415,1490,1565].forEach((b,i)=>{if(!i)return;const c=b-37,hw=21;
   door(c-hw,wy(150),c+hw,wy(150),0,-1,1.5,stallM);door(c-hw,wy(260),c+hw,wy(260),0,1,1.5,stallM);});
