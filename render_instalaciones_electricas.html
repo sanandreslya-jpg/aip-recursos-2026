@@ -45,7 +45,7 @@ canvas{display:block;width:100%;height:100%}
   <h2>Elementos</h2>
   <label class="row"><input type="checkbox" id="tAc" checked><span><b>Acometida y tierra</b><span class="d">2 tubos PVC-P Ø 50 mm desde la buzoneta al TG</span></span></label>
   <label class="row"><input type="checkbox" id="tWalls" checked><span><b>Muros</b></span></label>
-  <label class="row"><input type="checkbox" id="tWin" checked><span><b>Ventanas altas</b><span class="d">Se resaltan en rojo si una tubería las cruza</span></span></label>
+  <label class="row"><input type="checkbox" id="tWin" checked><span><b>Ventanas</b><span class="d">Alféizar 2.40 m. Se resaltan en rojo si una tubería las cruza</span></span></label>
   <p class="note" id="clash" style="margin:6px 0 0"></p>
   <label class="row"><input type="checkbox" id="tDoor" checked><span><b>Puertas</b><span class="d">Hoja de madera con su arco de giro; cubículos de 1.50 × 0.60 m</span></span></label>
   <label class="row"><input type="checkbox" id="tRoof"><span><b>Techo</b></span></label>
@@ -78,7 +78,7 @@ controls.enableDamping=true;
 scene.add(new THREE.HemisphereLight(0xffffff,0x778877,0.85));
 const sun=new THREE.DirectionalLight(0xffffff,0.6);sun.position.set(10,25,12);scene.add(sun);
 
-const S=0.0145, H=3.0;               // metros por píxel de plano, altura de muros
+const S=0.01348, H=3.09;               // metros por píxel de plano, altura de muros
 const X=px=>(px-95)*S, Z=py=>(py-30)*S;
 const wet=(x,y)=>[x,y-490];           // planta superior (bloque húmedo) a coordenadas del dormitorio
 const mat=(c,o={})=>new THREE.MeshStandardMaterial(Object.assign({color:c,roughness:.8},o));
@@ -95,12 +95,12 @@ const floorM=mat(0xb8bdb6);
 function wall(x0,y0,x1,y1,t=7,h=H){ // línea de muro
   if(x0===x1)box(groups.walls,x0-t/2,y0,x0+t/2,y1,h,wallM);else box(groups.walls,x0,y0-t/2,x1,y0+t/2,h,wallM);}
 // piso
-box(groups.walls,95,30,1600,430,.06,floorM,-.06);
+box(groups.walls,95,30,1690,430,.06,floorM,-.06);
 box(groups.walls,740,-445,1760,-130,.06,mat(0xa9b4b0),-.06);
 box(groups.walls,10,-445,590,-130,.06,mat(0x9aa59d),-.06);
 box(groups.walls,-30,470-35,1760,500,.04,mat(0xc2c6c0),-.06); // vereda sur
 // muros dormitorio
-wall(95,30,1600,30);wall(95,430,1600,430);wall(95,30,95,430);wall(1600,30,1600,430);
+wall(95,30,1690,30);wall(95,430,1690,430);wall(95,30,95,430);wall(1690,30,1690,430);
 wall(310,30,310,150);wall(310,230,310,430);           // sala de estar (vano de puerta)
 wall(1425,30,1425,190);wall(1425,300,1425,430);       // sala de estudio
 // muros bloque húmedo
@@ -120,7 +120,7 @@ function roof(x0,x1,y0,y1,rh){
   const g=new THREE.ExtrudeGeometry(sh,{depth:w+1,bevelEnabled:false});
   const m=new THREE.Mesh(g,mat(0x7b8f9a,{transparent:true,opacity:.35,side:THREE.DoubleSide,depthWrite:false}));
   m.rotation.y=Math.PI/2;m.position.set(X(x0)-.5,H,Z((y0+y1)/2));groups.roof.add(m);}
-roof(95,1600,30,430,1.4);roof(740,1760,-445,-130,1.2);
+roof(95,1690,30,430,1.4);roof(740,1760,-445,-130,1.2);
 groups.roof.visible=false;
 
 // mobiliario
@@ -219,22 +219,33 @@ run('c5',[[1700,Y5,fl+.02],[1730,Y5,fl+.02],[1730,wy(160),fl+.02],[1730,wy(160),
 outlet('c5',845,Y5);outlet('c5',1730,wy(160));
 
 
-/* ---------- ventanas altas (sill 1.70 m, alto 1.00 m; posición estimada entre ejes de columnas) ---------- */
-const SILL=1.7,WH=1.0,wins=[];
-function windowAt(x0,x1,y,sill=SILL,h=WH,panes=1,mesh=false){ // y en px, muro horizontal
-  const w=(x1-x0)*S,t=.16;
-  const glass=new THREE.MeshStandardMaterial({color:mesh?0xb9c9a8:0x7fc4ff,transparent:true,opacity:mesh?.5:.45,roughness:.1,metalness:.1,depthWrite:false});
-  const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,t),glass);m.userData.mesh=mesh;
-  m.position.set(X((x0+x1)/2),sill+h/2,Z(y));groups.win.add(m);
-  const lc=mesh?0x7a4f24:0x2a3a44;
+/* ---------- ventanas (cuadro de vanos del plano I-02: alféizar 2.40 m, bastidor de madera con malla mosquitera) ---------- */
+const wins=[];
+const AX=xpt=>95+1.353*(xpt-480), AY=ypt=>30+1.37*(ypt-709); // plano de arquitectura (pt) a px del plano eléctrico
+function win_(tag,cx,cy,wm,h,panes,sill=2.4,vert=false){
+  const w=wm,t=.16;
+  const glass=new THREE.MeshStandardMaterial({color:0xb9c9a8,transparent:true,opacity:.5,roughness:.1,metalness:.1,depthWrite:false});
+  const m=new THREE.Mesh(new THREE.BoxGeometry(vert?t:w,h,vert?w:t),glass);m.userData.mesh=true;
+  m.position.set(X(cx),sill+h/2,Z(cy));groups.win.add(m);
+  const lc=0x7a4f24;
   const fr=new THREE.LineSegments(new THREE.EdgesGeometry(m.geometry),new THREE.LineBasicMaterial({color:lc}));
   fr.position.copy(m.position);groups.win.add(fr);
-  for(let i=1;i<panes;i++){const bar=new THREE.Mesh(new THREE.BoxGeometry(.05,h,t+.02),new THREE.MeshStandardMaterial({color:lc}));bar.position.set(m.position.x-w/2+w*i/panes,m.position.y,m.position.z);groups.win.add(bar);}
-  wins.push({m,box:new THREE.Box3().setFromObject(m).expandByScalar(.05)});}
-// dormitorio: muros norte (y=30) y sur (y=430) por tramos entre ejes
-[[130,285],[345,515],[570,740],[790,960],[1010,1185],[1240,1410],[1470,1585]].forEach(([a,b])=>{windowAt(a,b,30);windowAt(a,b,430);});
-// bloque húmedo (corte I-06): bastidor de madera con malla mosquitera sobre los tabiques de 2.40 m, 3 paños por tramo
-[[760,935],[950,1125],[1145,1255],[1275,1335],[1350,1575],[1590,1745]].forEach(([a,b])=>{windowAt(a,b,wy(45),2.4,.55,3,true);windowAt(a,b,wy(360),2.4,.55,3,true);});
+  for(let i=1;i<panes;i++){const o=-w/2+w*i/panes,bar=new THREE.Mesh(new THREE.BoxGeometry(vert?t+.02:.05,h,vert?.05:t+.02),new THREE.MeshStandardMaterial({color:lc}));
+    bar.position.set(m.position.x+(vert?0:o),m.position.y,m.position.z+(vert?o:0));groups.win.add(bar);}
+  wins.push({tag,m,box:new THREE.Box3().setFromObject(m).expandByScalar(.05)});}
+// dormitorio, muro norte (eje B) y sur (eje A)
+[719,886,1050,1214,1379].forEach(x=>win_('V5',AX(x),30,2.85,.69,3));
+[731,894,1058,1220,1387].forEach(x=>win_('V5',AX(x),430,2.85,.69,3));
+win_('V8',AX(592),30,1.70,.69,2);win_('V8',AX(591),430,1.70,.69,2);
+win_('V9',AX(508),30,1.00,.69,1);win_('V9',AX(508),430,1.00,.69,1);
+win_('V9',AX(1496),30,1.00,.69,1);win_('V9',AX(1628),430,1.00,.69,1);
+win_('V6',AX(1590),30,2.35,.69,2);
+win_('V1',95,230,5.20,.69,4,2.4,true);win_('V1',1690,230,5.20,.69,4,2.4,true);
+// bloque húmedo: un vano centrado en cada tramo entre ejes 1'-2', 2'-3', 3'-4'
+const wb=[AX(1058),AX(1252),AX(1461)];
+win_('V4',wb[0],wy(45),3.25,.55,3);win_('V3',wb[1],wy(45),3.30,.55,3);win_('V2',wb[2],wy(45),3.85,.55,3);
+win_('V7',wb[0],wy(360),3.25,.35,3,2.6);win_('V3',wb[1],wy(360),3.30,.55,3);win_('V2',wb[2],wy(360),3.85,.55,3);
+win_('V2',1760,-287,3.85,.55,3,2.4,true);
 // cruces tubería-ventana
 function clashes(){
   let n=0;const hit=new Set();
@@ -243,9 +254,10 @@ function clashes(){
   wins.forEach(w=>{const bad=hit.has(w);w.m.material.color.set(bad?0xff3030:(w.m.userData.mesh?0xb9c9a8:0x7fc4ff));w.m.material.opacity=bad?.7:.45;});
   return hit.size;}
 const nClash=clashes();
+const hitTags=[...new Set(wins.filter(w=>w.m.material.color.getHex()===0xff3030).map(w=>w.tag))];
 document.getElementById('clash').textContent=nClash===0
-  ?`Revisión: ${wins.length} ventanas, ninguna cruzada por tubería. Los tubos pasan por encima de las ventanas.`
-  :`Revisión: ${nClash} de ${wins.length} ventanas cruzadas por tubería (en rojo).`;
+  ?`Revisión: ${wins.length} ventanas, ninguna cruzada por tubería.`
+  :`Revisión: ${nClash} de ${wins.length} ventanas cruzadas por tubería (en rojo): ${hitTags.join(', ')}. Las ramas a luces de emergencia y a interruptores atraviesan el muro a 2.99 m, dentro de la franja de ventana 2.40 a 3.09 m.`;
 
 
 /* Acometida: 2 tubos PVC-P Ø 50 mm desde la buzoneta (alimentador del sistema fotovoltaico) hasta el TG */
@@ -276,24 +288,20 @@ function door(x0,y0,x1,y1,nx,nz,h=2.1,m=doorM){
   const pts=[];for(let i=0;i<=16;i++){const t=a*i/16;pts.push(new THREE.Vector3(hx+(ux*Math.cos(t)+vx*Math.sin(t))*w,.02,hz+(uz*Math.cos(t)+vz*Math.sin(t))*w));}
   groups.door.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts),new THREE.LineBasicMaterial({color:0x8a5a2b})));
 }
-// dormitorio (0.90 m aprox.)
-door(95,60,95,125,1,0);        // sala de estar, ingreso oeste
-door(110,430,175,430,0,-1);    // sala de estar, salida sur
-door(310,150,310,215,1,0);     // sala de estar a dormitorio
-door(1425,200,1425,265,-1,0);  // dormitorio a sala de estudio
-door(1445,30,1510,30,0,1);     // sala de estudio, norte
-door(1520,430,1585,430,0,-1);  // sala de estudio, sur
-// bloque húmedo (posiciones tomadas de los arcos de giro del plano IE-01)
-door(748,wy(360),807,wy(360),0,-1);    // dep. limpieza, desde el pasadizo
-door(875,wy(360),949,wy(360),0,-1);    // duchas + vestidor
-door(860,wy(45),817,wy(45),0,1,1.5,stallM);    // cubículo de ducha norte
-door(860,wy(197),817,wy(197),0,-1,1.5,stallM); // cubículo de ducha sur
-door(1642,wy(360),1590,wy(360),0,-1);  // ingreso a SS.HH.
-door(1727,wy(360),1678,wy(360),0,-1);  // depósito
-// puertas de cubículo 1.50 × 0.60 m
-[1340,1415,1490,1565].forEach((b,i)=>{if(!i)return;const c=b-37,hw=21;
-  door(c-hw,wy(150),c+hw,wy(150),0,-1,1.5,stallM);door(c-hw,wy(260),c+hw,wy(260),0,1,1.5,stallM);});
-door(1280,wy(150),1322,wy(150),0,-1,1.5,stallM);door(1280,wy(260),1322,wy(260),0,1,1.5,stallM);
+// puertas del cuadro de vanos: P1 1.00×2.40, P2 0.90×2.40, P3 0.80×2.40, P4 0.60×1.50 (cubículos)
+function doorC(cx,cy,wm,nz,h=2.4,m=doorM,hingeLeft=true){
+  const hw=wm/S/2,a=cx-hw,b=cx+hw;
+  hingeLeft?door(a,cy,b,cy,0,nz,h,m):door(b,cy,a,cy,0,nz,h,m);}
+doorC(AX(508),30,1.0,1);doorC(AX(1497),30,1.0,1);          // P1 norte, con ventana V9 encima
+doorC(AX(509),430,1.0,-1);doorC(AX(1629),430,1.0,-1);      // P1 sur, con ventana V9 encima
+doorC(AX(1082),wy(360),1.0,-1);                            // P1 duchas + vestidor
+doorC(AX(990),wy(360),.8,-1);                              // P3 dep. limpieza
+doorC(AX(1606),wy(360),.9,-1,2.4,doorM,false);             // P2 ingreso SS.HH.
+doorC(AX(1680),wy(360),.9,-1,2.4,doorM,false);             // P2 depósito de ropa blanca
+// P4 cubículos de inodoro (fila norte y fila sur)
+[1363,1440,1483,1557].forEach(x=>{doorC(AX(x),AY(428),.6,-1,1.5,stallM,false);doorC(AX(x),AY(525),.6,1,1.5,stallM,false);});
+// P4 cubículos de ducha (posición tomada de la etiqueta del plano)
+[[1036,380,1],[1036,457,-1],[1185,380,1],[1185,459,-1],[1268,380,1],[1268,458,-1],[1268,493,1],[1268,571,-1]].forEach(([x,y,n])=>doorC(AX(x),AY(y),.6,n,1.5,stallM,false));
 
 // etiquetas
 function label(t,x,y,z){
