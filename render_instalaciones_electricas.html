@@ -1,0 +1,282 @@
+<title>Residencia Nuevo Belén 3D</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@400;600&display=swap">
+<style>
+/* Layout: visor 3D a pantalla completa con panel de circuitos a la izquierda; en teléfono el panel pasa debajo. */
+:root{
+  --bg:#eef0ee; --panel:#ffffff; --fg:#1b2420; --muted:#5d6b64; --line:#cfd6d1; --scene:#dfe5e1; --accent:#0b6e4f;
+  --c1:#e07b00; --c2:#b0239c; --c3:#0f9d6e; --c4:#2563eb; --c5:#d92b2b;
+  --display:"IBM Plex Sans Condensed","Arial Narrow",sans-serif; --mono:"IBM Plex Mono",ui-monospace,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#121815; --panel:#1b2420; --fg:#e8eeea; --muted:#93a39a; --line:#2f3b35; --scene:#18201c; --accent:#4fd1a1;
+  --c1:#ffa733; --c2:#e56ad3; --c3:#3fe0a8; --c4:#6d9bff; --c5:#ff6b6b; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#121815; --panel:#1b2420; --fg:#e8eeea; --muted:#93a39a; --line:#2f3b35; --scene:#18201c; --accent:#4fd1a1;
+  --c1:#ffa733; --c2:#e56ad3; --c3:#3fe0a8; --c4:#6d9bff; --c5:#ff6b6b; color-scheme:dark}
+html,body{height:100%}
+body{background:var(--bg);color:var(--fg);font:14px/1.45 var(--display);padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:12px;box-sizing:border-box}
+.app{display:grid;grid-template-columns:300px minmax(0,1fr);gap:14px;height:100%}
+aside{background:var(--panel);border:1px solid var(--line);padding:14px;overflow:auto;min-width:0}
+h1{font-size:20px;line-height:1.15;margin:0 0 2px;font-weight:600;text-wrap:balance}
+.sub{color:var(--muted);font-size:12px;margin:0 0 12px}
+h2{font:500 11px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin:14px 0 6px}
+label.row{display:flex;gap:8px;align-items:flex-start;padding:5px 0;cursor:pointer;border-bottom:1px solid var(--line)}
+label.row input{margin-top:3px;accent-color:var(--accent)}
+.sw{width:22px;height:5px;margin-top:7px;flex:none}
+.row b{font-weight:600;display:block}
+.row span.d{color:var(--muted);font-size:12px}
+.btns{display:flex;flex-wrap:wrap;gap:6px}
+button{font:500 12px var(--mono);background:transparent;color:var(--fg);border:1px solid var(--line);padding:6px 9px;cursor:pointer}
+button:hover,button:focus-visible{border-color:var(--accent);outline:none;color:var(--accent)}
+#view{position:relative;min-width:0;border:1px solid var(--line);background:var(--scene);min-height:340px}
+canvas{display:block;width:100%;height:100%}
+#tip{position:absolute;left:10px;bottom:10px;font:12px var(--mono);color:var(--muted);background:var(--panel);border:1px solid var(--line);padding:4px 8px;max-width:calc(100% - 20px)}
+.note{font-size:12px;color:var(--muted);margin-top:12px}
+@media(max-width:760px){body{height:auto}.app{grid-template-columns:1fr;height:auto}#view{height:62vh;order:-1}}
+</style>
+
+<div class="app">
+<aside>
+  <h1>Residencia Estudiantil I.E. N°16722</h1>
+  <p class="sub">Dormitorio de mujeres · Nuevo Belén, Imaza · Instalaciones eléctricas IE-01 a IE-03</p>
+  <h2>Circuitos (tablero TG)</h2>
+  <div id="circuits"></div>
+  <h2>Elementos</h2>
+  <label class="row"><input type="checkbox" id="tWalls" checked><span><b>Muros</b></span></label>
+  <label class="row"><input type="checkbox" id="tWin" checked><span><b>Ventanas altas</b><span class="d">Se resaltan en rojo si una tubería las cruza</span></span></label>
+  <p class="note" id="clash" style="margin:6px 0 0"></p>
+  <label class="row"><input type="checkbox" id="tRoof"><span><b>Techo</b></span></label>
+  <label class="row"><input type="checkbox" id="tFurn" checked><span><b>Camas, sofás y sanitarios</b></span></label>
+  <h2>Cámara</h2>
+  <div class="btns"><button data-cam="iso">Isométrica</button><button data-cam="top">Planta</button><button data-cam="in">Interior dormitorio</button><button data-cam="wet">SS.HH.</button></div>
+  <p class="note">Arrastre para girar, rueda para acercar, clic derecho para desplazar. Alturas según leyenda: interruptores 1.25 m, tomacorrientes 0.55 m, emergencia 2.20 m, TG 1.80 m. Dimensiones estimadas del plano, no cotas oficiales.</p>
+</aside>
+<div id="view"><div id="tip">Modelo interpretado de los planos; confirmar medidas en obra.</div></div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script>
+const css=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const CIR={
+ c1:{n:'C1 · Alumbrado ambientes',d:'2×16 A · LSOH 3×4 mm² · luces de emergencia'},
+ c2:{n:'C2 · Alumbrado pasadizos',d:'Veredas y corredor sur'},
+ c3:{n:'C3 · Alumbrado SS.HH.',d:'Duchas, SS.HH., depósito y lavandería'},
+ c4:{n:'C4 · Tomacorrientes ambientes',d:'2×20 A · tubería empotrada en piso · h 0.55 m'},
+ c5:{n:'C5 · Tomacorrientes SS.HH.',d:'No se instala en el dormitorio de varones'}
+};
+const view=document.getElementById('view');
+const scene=new THREE.Scene();
+const renderer=new THREE.WebGLRenderer({antialias:true});
+view.insertBefore(renderer.domElement,view.firstChild);
+const camera=new THREE.PerspectiveCamera(45,1,0.1,300);
+const controls=new THREE.OrbitControls(camera,renderer.domElement);
+controls.enableDamping=true;
+scene.add(new THREE.HemisphereLight(0xffffff,0x778877,0.85));
+const sun=new THREE.DirectionalLight(0xffffff,0.6);sun.position.set(10,25,12);scene.add(sun);
+
+const S=0.0145, H=3.0;               // metros por píxel de plano, altura de muros
+const X=px=>(px-95)*S, Z=py=>(py-30)*S;
+const wet=(x,y)=>[x,y-490];           // planta superior (bloque húmedo) a coordenadas del dormitorio
+const mat=(c,o={})=>new THREE.MeshStandardMaterial(Object.assign({color:c,roughness:.8},o));
+const groups={walls:new THREE.Group(),roof:new THREE.Group(),furn:new THREE.Group(),win:new THREE.Group()};
+Object.values(groups).forEach(g=>scene.add(g));
+const cg={};for(const k in CIR){cg[k]=new THREE.Group();scene.add(cg[k]);}
+
+function box(g,x0,y0,x1,y1,h,m,yb=0){ // en px de plano
+  const w=Math.abs(x1-x0)*S,d=Math.abs(y1-y0)*S;
+  const b=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),m);
+  b.position.set(X((x0+x1)/2),yb+h/2,Z((y0+y1)/2));g.add(b);return b;}
+const wallM=mat(0xd9d3c6,{transparent:true,opacity:.55,depthWrite:false});
+const floorM=mat(0xb8bdb6);
+function wall(x0,y0,x1,y1,t=7,h=H){ // línea de muro
+  if(x0===x1)box(groups.walls,x0-t/2,y0,x0+t/2,y1,h,wallM);else box(groups.walls,x0,y0-t/2,x1,y0+t/2,h,wallM);}
+// piso
+box(groups.walls,95,30,1600,430,.06,floorM,-.06);
+box(groups.walls,740,-445,1870,-130,.06,mat(0xa9b4b0),-.06);
+box(groups.walls,10,-445,590,-130,.06,mat(0x9aa59d),-.06);
+box(groups.walls,-30,470-35,1760,500,.04,mat(0xc2c6c0),-.06); // vereda sur
+// muros dormitorio
+wall(95,30,1600,30);wall(95,430,1600,430);wall(95,30,95,430);wall(1600,30,1600,430);
+wall(310,30,310,150);wall(310,230,310,430);           // sala de estar (vano de puerta)
+wall(1425,30,1425,190);wall(1425,300,1425,430);       // sala de estudio
+// muros bloque húmedo
+const wy=y=>y-490;
+wall(740,wy(45),1870,wy(45));wall(740,wy(360),1870,wy(360));wall(740,wy(45),740,wy(360));wall(1870,wy(45),1870,wy(360));
+wall(1265,wy(45),1265,wy(360));wall(1580,wy(120),1580,wy(300));wall(745,wy(205),860,wy(205));wall(860,wy(205),860,wy(330));
+// cabinas
+[[1400,1475,1560,1640],[]].flat();
+[1340,1415,1490,1565].forEach(x=>{wall(x,wy(45),x,wy(150),4,2.4);wall(x,wy(260),x,wy(360),4,2.4);});
+[[940,1130]].forEach(([a,b])=>{wall(a,wy(45),a,wy(205),4,2.4);wall(b,wy(45),b,wy(360),4,2.4);});
+// lavandería: tendal con columnas
+[10,250,470,590].forEach(x=>box(groups.walls,x-4,-445,x+4,-437,H,mat(0x9aa08f)));
+// techo a dos aguas sobre dormitorio y bloque húmedo
+function roof(x0,x1,y0,y1,rh){
+  const w=(x1-x0)*S,d=(y1-y0)*S,sh=new THREE.Shape();
+  sh.moveTo(-d/2-.5,0);sh.lineTo(d/2+.5,0);sh.lineTo(0,rh);sh.closePath();
+  const g=new THREE.ExtrudeGeometry(sh,{depth:w+1,bevelEnabled:false});
+  const m=new THREE.Mesh(g,mat(0x7b8f9a,{transparent:true,opacity:.35,side:THREE.DoubleSide,depthWrite:false}));
+  m.rotation.y=Math.PI/2;m.position.set(X(x0)-.5,H,Z((y0+y1)/2));groups.roof.add(m);}
+roof(95,1600,30,430,1.4);roof(740,1870,-445,-130,1.2);
+groups.roof.visible=false;
+
+// mobiliario
+const bedM=mat(0x7a8fc4),sofaM=mat(0x8d6e63),wcM=mat(0xf2f2f2);
+[320,495,605,780,890,1065,1170,1350].forEach(x=>{
+  box(groups.furn,x,40,x+68,180,.45,bedM);box(groups.furn,x,280,x+68,420,.45,bedM);});
+box(groups.furn,170,40,300,110,.45,sofaM);box(groups.furn,170,360,300,420,.45,sofaM);
+box(groups.furn,1600-40,90,1596,300,.75,mat(0x9c8b72));
+[1300,1380,1455,1535].forEach(x=>{box(groups.furn,x-20,wy(60),x+20,wy(110),.4,wcM);box(groups.furn,x-20,wy(300),x+20,wy(345),.4,wcM);});
+
+// ---------- utilidades eléctricas ----------
+const tubeR=.02;
+const segs=[];
+function pt(p){return new THREE.Vector3(X(p[0]),p[2],Z(p[1]));}
+function run(k,pts,r=tubeR,dash=false){
+  const g=cg[k],m=new THREE.MeshStandardMaterial({color:css('--'+k),roughness:.4,emissive:css('--'+k),emissiveIntensity:.25,transparent:dash,opacity:dash?.75:1});m.userData.ck=k;
+  for(let i=0;i<pts.length-1;i++){
+    const a=pt(pts[i]),b=pt(pts[i+1]),len=a.distanceTo(b);if(len<1e-4)continue;segs.push([a,b]);
+    const c=new THREE.Mesh(new THREE.CylinderGeometry(r,r,len,8),m);
+    c.position.copy(a).add(b).multiplyScalar(.5);
+    c.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),b.clone().sub(a).normalize());
+    g.add(c);
+    const s=new THREE.Mesh(new THREE.SphereGeometry(r*1.2,8,8),m);s.position.copy(b);g.add(s);}
+}
+function lum(k,x,y,h,dir,len=1.2){ // luminaria LED hermética 40 W
+  const w=dir==='h'?len:.12,d=dir==='h'?.12:len;
+  const m=new THREE.Mesh(new THREE.BoxGeometry(w,.07,d),mat(0xf8f8f0,{emissive:0xfff2c0,emissiveIntensity:.6}));
+  m.position.set(X(x),h,Z(y));cg[k].add(m);
+  const rm=new THREE.MeshStandardMaterial({color:css('--'+k)});rm.userData.ck=k;const ring=new THREE.Mesh(new THREE.BoxGeometry(w+.04,.02,d+.04),rm);
+  ring.position.set(X(x),h+.045,Z(y));cg[k].add(ring);}
+function emer(k,x,y,h=2.2){ // luminaria de emergencia + caja de paso
+  const m=new THREE.Mesh(new THREE.BoxGeometry(.3,.12,.1),mat(0xffffff,{emissive:0xff4444,emissiveIntensity:.5}));
+  m.position.set(X(x),h,Z(y));cg[k].add(m);}
+function wall_box(k,x,y,h,col){
+  const m=new THREE.Mesh(new THREE.BoxGeometry(.1,.1,.06),mat(0xeeeeee));m.position.set(X(x),h,Z(y));cg[k].add(m);
+  const tm=new THREE.MeshStandardMaterial({color:css('--'+k)});tm.userData.ck=k;const t=new THREE.Mesh(new THREE.BoxGeometry(.06,.06,.07),tm);t.position.copy(m.position);cg[k].add(t);}
+function junction(k,x,y,h=H-.08){const m=new THREE.Mesh(new THREE.BoxGeometry(.14,.14,.14),mat(0x9aa4a0,{metalness:.5}));m.position.set(X(x),h,Z(y));cg[k].add(m);}
+
+const hc=H-.1; // nivel de tubería en techo
+// TG
+const TG=[1560,45];
+const tg=new THREE.Mesh(new THREE.BoxGeometry(.45,.7,.15),mat(0x4a5560,{metalness:.5}));
+tg.position.set(X(TG[0]),1.55,Z(TG[1]));scene.add(tg);
+// buzoneta y pozo a tierra
+const bz=new THREE.Mesh(new THREE.BoxGeometry(.3,.3,.3),mat(0x808080));bz.position.set(X(1700),-.1,Z(45));scene.add(bz);
+const pozo=new THREE.Mesh(new THREE.CylinderGeometry(.3,.3,.15,20),mat(0x6b5b3a));pozo.position.set(X(1790),-.05,Z(120));scene.add(pozo);
+const gnd=new THREE.Mesh(new THREE.CylinderGeometry(.015,.015,2.4,8),mat(0xb87333,{metalness:.8}));gnd.position.set(X(1790),-1.2,Z(120));scene.add(gnd);
+const cable=[];
+
+/* C1 ambientes */
+const cy=228;
+run('c1',[[TG[0],TG[1],1.9],[TG[0],TG[1],hc],[TG[0],cy,hc],[197,cy,hc]]);
+[318,598,1167,1417].forEach(x=>junction('c1',x,cy,hc));
+[[437,'h'],[727,'h'],[1012,'h'],[1297,'h']].forEach(([x,d])=>lum('c1',x,cy,hc-.05,d));
+[[197,134],[197,327]].forEach(([x,y])=>{run('c1',[[x,cy,hc],[x,y,hc]]);lum('c1',x,y,hc-.05,'h');});
+lum('c1',1487,cy,hc-.05,'v');
+[[1590,135],[1590,330]].forEach(([x,y])=>{run('c1',[[1560,cy,hc],[1590,cy,hc],[x,y,hc]]);lum('c1',x,y,hc-.05,'v');});
+[[580,45],[1155,410],[390,445],[1385,445],[1385,15],[1555,410],[245,15]].forEach(([x,y])=>{run('c1',[[x,cy,hc],[x,y,hc],[x,y,2.2]]);emer('c1',x,y);});
+// interruptores simples/dobles/triples (1.25 m)
+[[175,38],[318,185],[1505,45],[1417,185],[1580,425],[180,430],[1555,435]].forEach(([x,y])=>{
+  run('c1',[[x,cy,hc],[x,y,hc],[x,y,1.25]],.015);wall_box('c1',x,y,1.25);});
+
+/* C2 pasadizos */
+run('c2',[[TG[0],TG[1],1.9],[TG[0],TG[1],hc+.05],[1722,TG[1],hc+.05],[1722,478,hc+.05],[45,478,hc+.05]]);
+[[265,'h'],[865,'h'],[1467,'h']].forEach(([x,d])=>lum('c2',x,478,hc,d));
+[[45,228],[1722,228]].forEach(([x,y])=>{run('c2',[[x,478,hc+.05],[x,y,hc+.05]]);lum('c2',x,y,hc,'v');});
+[45,405,1722].forEach(x=>junction('c2',x,478,hc+.05));
+
+/* C3 alumbrado SS.HH. */
+const w=(x,y)=>wet(x,y);
+const Y3=wy(207)-0+0;
+run('c3',[[TG[0],TG[1],1.9],[TG[0],TG[1],hc+.1],[1700,TG[1],hc+.1],[1700,Y3,hc+.1],[690,Y3,hc+.1]]);
+[[1700,Y3,'v'],[1497,Y3,'v'],[1380,Y3,'v'],[960,Y3,'v'],[1155,Y3,'v']].forEach(([x,y,d])=>lum('c3',x,y,hc+.05,d));
+const wl=[793,wy(285)];run('c3',[[793,Y3,hc+.1],[wl[0],wl[1],hc+.1]]);lum('c3',wl[0],wl[1],hc+.05,'v');
+[[690,wy(130)],[690,wy(290)]].forEach(([x,y])=>{run('c3',[[x,Y3,hc+.1],[x,y,hc+.1],[x,y,2.5]]);
+  const r=new THREE.Mesh(new THREE.CylinderGeometry(.12,.12,.08,14),mat(0xffffff,{emissive:0xfff2c0,emissiveIntensity:.8}));r.position.set(X(x),2.5,Z(y));cg.c3.add(r);});
+[[1600,wy(175)],[970,wy(340)]].forEach(([x,y])=>{run('c3',[[x,Y3,hc+.1],[x,y,hc+.1],[x,y,2.2]]);emer('c3',x,y);});
+[[825,wy(347)],[945,wy(367)],[1590,wy(345)],[1665,wy(347)]].forEach(([x,y])=>{run('c3',[[x,Y3,hc+.1],[x,y,hc+.1],[x,y,1.25]],.015);wall_box('c3',x,y,1.25);});
+
+/* C4 tomacorrientes (tubería empotrada en piso) */
+const fl=.03;
+run('c4',[[TG[0],TG[1],1.4],[TG[0],TG[1],fl],[1668,TG[1],fl],[1668,372,fl],[100,372,fl]],tubeR,true);
+[[1668,100],[1668,248],[1505,368],[1155,368],[870,368],[583,372],[298,372],[100,372]].forEach(([x,y])=>{
+  run('c4',[[x,Math.min(Math.max(y,45),372),fl],[x,y,.55]],.015,true);outlet('c4',x,y);});
+run('c4',[[298,372,fl],[298,272,fl],[298,272,.55]],.015,true);outlet('c4',298,272);
+run('c4',[[100,372,fl],[100,185,fl],[100,185,.55]],.015,true);outlet('c4',100,185);
+function outlet(k,x,y,h=.55){
+  const m=new THREE.Mesh(new THREE.BoxGeometry(.1,.1,.05),mat(0xeeeeee));m.position.set(X(x),h,Z(y));cg[k].add(m);
+  const tm=new THREE.MeshStandardMaterial({color:css('--'+k)});tm.userData.ck=k;const t=new THREE.Mesh(new THREE.CylinderGeometry(.025,.025,.06,10),tm);
+  t.rotation.x=Math.PI/2;t.position.copy(m.position);cg[k].add(t);}
+
+/* C5 tomacorrientes SS.HH. */
+const Y5=wy(292);
+run('c5',[[TG[0],TG[1],1.3],[TG[0],TG[1],fl+.02],[1700,TG[1],fl+.02],[1700,Y5,fl+.02],[845,Y5,fl+.02],[845,Y5,.55]],tubeR,true);
+run('c5',[[1700,Y5,fl+.02],[1730,Y5,fl+.02],[1730,wy(160),fl+.02],[1730,wy(160),.55]],.015,true);
+outlet('c5',845,Y5);outlet('c5',1730,wy(160));
+
+
+/* ---------- ventanas altas (sill 1.70 m, alto 1.00 m; posición estimada entre ejes de columnas) ---------- */
+const SILL=1.7,WH=1.0,wins=[];
+function windowAt(x0,x1,y,sill=SILL,h=WH,panes=1,mesh=false){ // y en px, muro horizontal
+  const w=(x1-x0)*S,t=.16;
+  const glass=new THREE.MeshStandardMaterial({color:mesh?0xb9c9a8:0x7fc4ff,transparent:true,opacity:mesh?.5:.45,roughness:.1,metalness:.1,depthWrite:false});
+  const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,t),glass);m.userData.mesh=mesh;
+  m.position.set(X((x0+x1)/2),sill+h/2,Z(y));groups.win.add(m);
+  const lc=mesh?0x7a4f24:0x2a3a44;
+  const fr=new THREE.LineSegments(new THREE.EdgesGeometry(m.geometry),new THREE.LineBasicMaterial({color:lc}));
+  fr.position.copy(m.position);groups.win.add(fr);
+  for(let i=1;i<panes;i++){const bar=new THREE.Mesh(new THREE.BoxGeometry(.05,h,t+.02),new THREE.MeshStandardMaterial({color:lc}));bar.position.set(m.position.x-w/2+w*i/panes,m.position.y,m.position.z);groups.win.add(bar);}
+  wins.push({m,box:new THREE.Box3().setFromObject(m).expandByScalar(.05)});}
+// dormitorio: muros norte (y=30) y sur (y=430) por tramos entre ejes
+[[130,285],[345,515],[570,740],[790,960],[1010,1185],[1240,1410],[1470,1585]].forEach(([a,b])=>{windowAt(a,b,30);windowAt(a,b,430);});
+// bloque húmedo (corte I-06): bastidor de madera con malla mosquitera sobre los tabiques de 2.40 m, 3 paños por tramo
+[[760,935],[950,1125],[1145,1255],[1275,1335],[1350,1575],[1590,1800]].forEach(([a,b])=>{windowAt(a,b,wy(45),2.4,.55,3,true);windowAt(a,b,wy(360),2.4,.55,3,true);});
+// cruces tubería-ventana
+function clashes(){
+  let n=0;const hit=new Set();
+  segs.forEach(([a,b])=>{for(let i=0;i<=60;i++){const p=a.clone().lerp(b,i/60);
+    wins.forEach(w=>{if(w.box.containsPoint(p))hit.add(w);});}});
+  wins.forEach(w=>{const bad=hit.has(w);w.m.material.color.set(bad?0xff3030:(w.m.userData.mesh?0xb9c9a8:0x7fc4ff));w.m.material.opacity=bad?.7:.45;});
+  return hit.size;}
+const nClash=clashes();
+document.getElementById('clash').textContent=nClash===0
+  ?`Revisión: ${wins.length} ventanas, ninguna cruzada por tubería. Los tubos pasan por encima de las ventanas.`
+  :`Revisión: ${nClash} de ${wins.length} ventanas cruzadas por tubería (en rojo).`;
+
+// etiquetas
+function label(t,x,y,z){
+  const c=document.createElement('canvas');c.width=256;c.height=64;const g=c.getContext('2d');
+  g.fillStyle='rgba(20,28,24,.85)';g.fillRect(0,0,256,64);g.fillStyle='#fff';g.font='600 30px sans-serif';g.textAlign='center';g.fillText(t,128,42);
+  const s=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(c),depthTest:false}));
+  s.scale.set(2,.5,1);s.position.set(x,y,z);scene.add(s);}
+label('TG',X(TG[0]),2.3,Z(TG[1]));
+label('Buzoneta',X(1700),.7,Z(45));
+label('Pozo a tierra',X(1790),.8,Z(120));
+label('Dormitorio M',X(850),3.9,Z(228));
+label('SS.HH.',X(1560),3.9,Z(wy(200)));
+label('Duchas',X(1000),3.9,Z(wy(200)));
+
+// UI
+const box_=document.getElementById('circuits');
+for(const k in CIR){
+  const l=document.createElement('label');l.className='row';
+  l.innerHTML=`<input type="checkbox" checked id="t_${k}"><i class="sw" style="background:var(--${k})"></i><span><b>${CIR[k].n}</b><span class="d">${CIR[k].d}</span></span>`;
+  box_.appendChild(l);l.querySelector('input').onchange=e=>cg[k].visible=e.target.checked;}
+tWalls.onchange=e=>groups.walls.visible=e.target.checked;
+tWin.onchange=e=>groups.win.visible=e.target.checked;
+tRoof.onchange=e=>groups.roof.visible=e.target.checked;
+tFurn.onchange=e=>groups.furn.visible=e.target.checked;
+const cams={iso:[[26,22,18],[12,0,-1]],top:[[12,40,-1],[12,0,-1.01]],in:[[-0.5,2.2,2.6],[10,1.4,2.8]],wet:[[20,6,-1],[16,1.4,-5]]};
+document.querySelectorAll('[data-cam]').forEach(b=>b.onclick=()=>{const c=cams[b.dataset.cam];camera.position.set(...c[0]);controls.target.set(...c[1]);});
+camera.position.set(...cams.iso[0]);controls.target.set(...cams.iso[1]);
+
+function size(){const r=view.getBoundingClientRect();renderer.setSize(r.width,r.height);camera.aspect=r.width/r.height;camera.updateProjectionMatrix();}
+function theme(){scene.background=new THREE.Color(css('--scene'));
+  for(const k in cg)cg[k].traverse(o=>{const m=o.material;if(m&&m.userData.ck){m.color.set(css('--'+k));if(m.emissive.getHex())m.emissive.set(css('--'+k));}});}
+new ResizeObserver(size).observe(view);size();theme();
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>setTimeout(theme,50));
+new MutationObserver(()=>setTimeout(theme,50)).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
+(function loop(){requestAnimationFrame(loop);controls.update();renderer.render(scene,camera);})();
+</script>
