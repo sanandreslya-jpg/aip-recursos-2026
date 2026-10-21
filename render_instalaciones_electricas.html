@@ -47,6 +47,7 @@ canvas{display:block;width:100%;height:100%}
   <label class="row"><input type="checkbox" id="tWalls" checked><span><b>Muros</b></span></label>
   <label class="row"><input type="checkbox" id="tWin" checked><span><b>Ventanas altas</b><span class="d">Se resaltan en rojo si una tubería las cruza</span></span></label>
   <p class="note" id="clash" style="margin:6px 0 0"></p>
+  <label class="row"><input type="checkbox" id="tDoor" checked><span><b>Puertas</b><span class="d">Hoja de madera con su arco de giro; cubículos de 1.50 × 0.60 m</span></span></label>
   <label class="row"><input type="checkbox" id="tRoof"><span><b>Techo</b></span></label>
   <label class="row"><input type="checkbox" id="tFurn" checked><span><b>Camas, sofás y sanitarios</b></span></label>
   <h2>Cámara</h2>
@@ -81,7 +82,7 @@ const S=0.0145, H=3.0;               // metros por píxel de plano, altura de mu
 const X=px=>(px-95)*S, Z=py=>(py-30)*S;
 const wet=(x,y)=>[x,y-490];           // planta superior (bloque húmedo) a coordenadas del dormitorio
 const mat=(c,o={})=>new THREE.MeshStandardMaterial(Object.assign({color:c,roughness:.8},o));
-const groups={walls:new THREE.Group(),roof:new THREE.Group(),furn:new THREE.Group(),win:new THREE.Group()};
+const groups={walls:new THREE.Group(),roof:new THREE.Group(),furn:new THREE.Group(),win:new THREE.Group(),door:new THREE.Group()};
 Object.values(groups).forEach(g=>scene.add(g));
 const cg={};for(const k in CIR){cg[k]=new THREE.Group();scene.add(cg[k]);}
 
@@ -258,6 +259,40 @@ const acG=new THREE.Group();scene.add(acG);
 const gc=new THREE.Mesh(new THREE.CylinderGeometry(.02,.02,Math.abs(X(1790)-X(TG[0])),8),mat(0xb87333,{metalness:.8}));
 gc.rotation.z=Math.PI/2;gc.position.set((X(1790)+X(TG[0]))/2,-.4,Z(120));gc.userData.info='Conductor Cu desnudo a pozo a tierra (borna de toma a tierra)';tubes.push(gc);acG.add(gc);
 
+
+/* ---------- puertas (hoja abierta 70° con su arco de giro) ---------- */
+const doorM=mat(0x8a5a2b),stallM=mat(0xb9895a),holeM=new THREE.MeshBasicMaterial({color:0x1a1410});
+function door(x0,y0,x1,y1,nx,nz,h=2.1,m=doorM){
+  const hx=X(x0),hz=Z(y0),dx=X(x1)-hx,dz=Z(y1)-hz,w=Math.hypot(dx,dz),ux=dx/w,uz=dz/w;
+  const nl=Math.hypot(nx,nz),vx=nx/nl,vz=nz/nl,a=Math.PI*70/180;
+  // vano oscuro
+  const hole=new THREE.Mesh(new THREE.BoxGeometry(w,h,.18),holeM);
+  hole.position.set(hx+dx/2,h/2,hz+dz/2);hole.rotation.y=Math.atan2(-dz,dx);groups.door.add(hole);
+  // hoja
+  const g=new THREE.Group(),lf=new THREE.Mesh(new THREE.BoxGeometry(w,h-.02,.04),m);lf.position.set(w/2,h/2,0);g.add(lf);
+  const ox=ux*Math.cos(a)+vx*Math.sin(a),oz=uz*Math.cos(a)+vz*Math.sin(a);
+  g.rotation.y=Math.atan2(-oz,ox);g.position.set(hx,0,hz);groups.door.add(g);
+  // arco de giro en el piso
+  const pts=[];for(let i=0;i<=16;i++){const t=a*i/16;pts.push(new THREE.Vector3(hx+(ux*Math.cos(t)+vx*Math.sin(t))*w,.02,hz+(uz*Math.cos(t)+vz*Math.sin(t))*w));}
+  groups.door.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts),new THREE.LineBasicMaterial({color:0x8a5a2b})));
+}
+// dormitorio (0.90 m aprox.)
+door(95,60,95,125,1,0);        // sala de estar, ingreso oeste
+door(110,430,175,430,0,-1);    // sala de estar, salida sur
+door(310,150,310,215,1,0);     // sala de estar a dormitorio
+door(1425,200,1425,265,-1,0);  // dormitorio a sala de estudio
+door(1445,30,1510,30,0,1);     // sala de estudio, norte
+door(1520,430,1585,430,0,-1);  // sala de estudio, sur
+// bloque húmedo
+door(860,wy(245),860,wy(310),-1,0);    // dep. limpieza
+door(870,wy(360),935,wy(360),0,-1);    // duchas + vestidor
+door(1265,wy(290),1265,wy(350),-1,0);  // paso duchas a SS.HH.
+door(1625,wy(360),1690,wy(360),0,-1);  // depósito
+// puertas de cubículo 1.50 × 0.60 m
+[1340,1415,1490,1565].forEach((b,i)=>{if(!i)return;const c=b-37,hw=21;
+  door(c-hw,wy(150),c+hw,wy(150),0,-1,1.5,stallM);door(c-hw,wy(260),c+hw,wy(260),0,1,1.5,stallM);});
+door(1280,wy(150),1322,wy(150),0,-1,1.5,stallM);door(1280,wy(260),1322,wy(260),0,1,1.5,stallM);
+
 // etiquetas
 function label(t,x,y,z){
   const c=document.createElement('canvas');c.width=256;c.height=64;const g=c.getContext('2d');
@@ -280,6 +315,7 @@ for(const k in CIR){
 tAc.onchange=e=>acG.visible=e.target.checked;
 tWalls.onchange=e=>groups.walls.visible=e.target.checked;
 tWin.onchange=e=>groups.win.visible=e.target.checked;
+tDoor.onchange=e=>groups.door.visible=e.target.checked;
 tRoof.onchange=e=>groups.roof.visible=e.target.checked;
 tFurn.onchange=e=>groups.furn.visible=e.target.checked;
 const cams={iso:[[26,22,18],[12,0,-1]],top:[[12,40,-1],[12,0,-1.01]],in:[[-0.5,2.2,2.6],[10,1.4,2.8]],wet:[[20,6,-1],[16,1.4,-5]]};
