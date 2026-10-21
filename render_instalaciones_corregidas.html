@@ -164,6 +164,12 @@ function wall_box(k,x,y,h,col){
 function junction(k,x,y,h=H-.08){const m=new THREE.Mesh(new THREE.BoxGeometry(.14,.14,.14),mat(0x9aa4a0,{metalness:.5}));m.position.set(X(x),h,Z(y));cg[k].add(m);}
 
 const hc=H-.1; // nivel de tubería en techo
+const hv=3.2;    // tubería de veranda, sobre el borde superior de las ventanas (3.09 m)
+// Ramal que llega a un punto pegado al muro: original (baja frente a la ventana) o corregido
+// (baja a 0.9 m del muro, sujeto al techo, y se acerca por debajo del alféizar a 2.30 m).
+function nearWall(k,x,y,hEnd,base,yr,hTop,r=tubeR){
+  run(k,[[x,base,hTop],[x,y,hTop],[x,y,hEnd]],r,false,'orig');
+  run(k,[[x,base,hTop],[x,yr,hTop],[x,yr,2.30],[x,y,2.30],[x,y,hEnd]],r,false,'sol');}
 // TG
 const TG=[1560,45];
 const tg=new THREE.Mesh(new THREE.BoxGeometry(.45,.7,.15),mat(0x4a5560,{metalness:.5}));
@@ -176,44 +182,43 @@ const cable=[];
 
 /* C1 ambientes */
 const cy=228;
-run('c1',[[TG[0],TG[1],1.9],[TG[0],TG[1],hc],[TG[0],cy,hc],[197,cy,hc]]);
+run('c1',[[TG[0],cy,hc],[197,cy,hc]]);
+run('c1',[[TG[0],TG[1],1.9],[TG[0],TG[1],hc],[TG[0],cy,hc]],tubeR,false,'orig');
+run('c1',[[TG[0],TG[1],1.9],[TG[0],TG[1],2.30],[TG[0],100,2.30],[TG[0],100,hc],[TG[0],cy,hc]],tubeR,false,'sol');
 [318,598,1167,1417].forEach(x=>junction('c1',x,cy,hc));
 [[437,'h'],[727,'h'],[1012,'h'],[1297,'h']].forEach(([x,d])=>lum('c1',x,cy,hc-.05,d));
 [[197,134],[197,327]].forEach(([x,y])=>{run('c1',[[x,cy,hc],[x,y,hc]]);lum('c1',x,y,hc-.05,'h');});
 lum('c1',1487,cy,hc-.05,'v');
 [[1590,135],[1590,330]].forEach(([x,y])=>{run('c1',[[1560,cy,hc],[1590,cy,hc],[x,y,hc]]);lum('c1',x,y,hc-.05,'v');});
 [[580,45],[1155,410],[390,445],[1385,445],[1385,15],[1555,410],[245,15]].forEach(([x,y])=>{
-  if(y>430||y<30){ // atraviesa el muro: original a 2.99 m o bajo el alféizar a 2.30 m
-    const yi=y<30?42:418,yw=y<30?30:430;
-    run('c1',[[x,cy,hc],[x,y,hc],[x,y,2.2]],tubeR,false,'orig');
-    run('c1',[[x,cy,hc],[x,yi,hc],[x,yi,2.30],[x,y,2.30],[x,y,2.2]],tubeR,false,'sol');
-    sleeves.push([x,yw,'z']);
-  }else run('c1',[[x,cy,hc],[x,y,hc],[x,y,2.2]]);
+  nearWall('c1',x,y,2.2,cy,y<228?100:360,hc);
+  if(y>430||y<30)sleeves.push([x,y<30?30:430,'z']); // cruza el muro bajo el alféizar
   emer('c1',x,y);});
 // interruptores simples/dobles/triples (1.25 m)
 [[175,38],[318,185],[1505,45],[1417,185],[1580,425],[180,430],[1555,435]].forEach(([x,y])=>{
-  run('c1',[[x,cy,hc],[x,y,hc],[x,y,1.25]],.015);wall_box('c1',x,y,1.25);});
+  if(y<50||y>380)nearWall('c1',x,y,1.25,cy,y<228?100:360,hc,.015);else run('c1',[[x,cy,hc],[x,y,hc],[x,y,1.25]],.015);
+  wall_box('c1',x,y,1.25);});
 
 /* C2 pasadizos */
-run('c2',[[TG[0],TG[1],1.9],[TG[0],TG[1],hc+.05],[1722,TG[1],hc+.05],[1722,478,hc+.05],[45,478,hc+.05]],tubeR,false,'orig');
-run('c2',[[TG[0],TG[1],1.9],[TG[0],TG[1],2.30],[1722,TG[1],2.30],[1722,TG[1],hc+.05],[1722,478,hc+.05],[45,478,hc+.05]],tubeR,false,'sol');
+run('c2',[[TG[0],TG[1],1.9],[TG[0],TG[1],hv],[1722,TG[1],hv],[1722,478,hv],[45,478,hv]],tubeR,false,'orig');
+run('c2',[[TG[0],TG[1],1.9],[TG[0],TG[1],2.30],[1722,TG[1],2.30],[1722,478,2.30],[1722,478,hv],[45,478,hv]],tubeR,false,'sol');
 sleeves.push([1690,TG[1],'x']);
-[[265,'h'],[865,'h'],[1467,'h']].forEach(([x,d])=>lum('c2',x,478,hc,d));
-[[45,228],[1722,228]].forEach(([x,y])=>{run('c2',[[x,478,hc+.05],[x,y,hc+.05]]);lum('c2',x,y,hc,'v');});
-[45,405,1722].forEach(x=>junction('c2',x,478,hc+.05));
+[[265,'h'],[865,'h'],[1467,'h']].forEach(([x,d])=>lum('c2',x,478,hv-.1,d));
+[[45,228],[1722,228]].forEach(([x,y])=>{run('c2',[[x,478,hv],[x,y,hv]]);lum('c2',x,y,hv-.1,'v');});
+[45,405,1722].forEach(x=>junction('c2',x,478,hv));
 
 /* C3 alumbrado SS.HH. */
 const w=(x,y)=>wet(x,y);
 const Y3=wy(207)-0+0;
 run('c3',[[TG[0],TG[1],1.9],[TG[0],TG[1],hc+.1],[1700,TG[1],hc+.1],[1700,Y3,hc+.1],[690,Y3,hc+.1]],tubeR,false,'orig');
-run('c3',[[1578,TG[1]+9,1.9],[1578,TG[1]+9,2.15],[1706,TG[1]+9,2.15],[1706,TG[1]+9,hc+.1],[1706,Y3,hc+.1],[690,Y3,hc+.1]],tubeR,false,'sol');
+run('c3',[[1578,TG[1]+9,1.9],[1578,TG[1]+9,2.15],[1706,TG[1]+9,2.15],[1706,12,2.15],[1706,12,hc+.1],[1706,Y3,hc+.1],[690,Y3,hc+.1]],tubeR,false,'sol');
 sleeves.push([1690,TG[1]+9,'x']);
 [[1700,Y3,'v'],[1497,Y3,'v'],[1380,Y3,'v'],[960,Y3,'v'],[1155,Y3,'v']].forEach(([x,y,d])=>lum('c3',x,y,hc+.05,d));
 const wl=[793,wy(285)];run('c3',[[793,Y3,hc+.1],[wl[0],wl[1],hc+.1]]);lum('c3',wl[0],wl[1],hc+.05,'v');
 [[690,wy(130)],[690,wy(290)]].forEach(([x,y])=>{run('c3',[[x,Y3,hc+.1],[x,y,hc+.1],[x,y,2.5]]);
   const r=new THREE.Mesh(new THREE.CylinderGeometry(.12,.12,.08,14),mat(0xffffff,{emissive:0xfff2c0,emissiveIntensity:.8}));r.position.set(X(x),2.5,Z(y));cg.c3.add(r);});
-[[1600,wy(175)],[970,wy(340)]].forEach(([x,y])=>{run('c3',[[x,Y3,hc+.1],[x,y,hc+.1],[x,y,2.2]]);emer('c3',x,y);});
-[[825,wy(347)],[945,wy(367)],[1590,wy(345)],[1665,wy(347)]].forEach(([x,y])=>{run('c3',[[x,Y3,hc+.1],[x,y,hc+.1],[x,y,1.25]],.015);wall_box('c3',x,y,1.25);});
+[[1600,wy(175)],[970,wy(340)]].forEach(([x,y])=>{if(y>wy(300))nearWall('c3',x,y,2.2,Y3,wy(290),hc+.1);else run('c3',[[x,Y3,hc+.1],[x,y,hc+.1],[x,y,2.2]]);emer('c3',x,y);});
+[[825,wy(347)],[945,wy(367)],[1590,wy(345)],[1665,wy(347)]].forEach(([x,y])=>{nearWall('c3',x,y,1.25,Y3,wy(290),hc+.1,.015);wall_box('c3',x,y,1.25);});
 
 /* C4 tomacorrientes (tubería empotrada en piso) */
 const fl=.03;
@@ -247,10 +252,10 @@ function win_(tag,cx,cy,wm,h,panes,sill=2.4,vert=false){
   fr.position.copy(m.position);groups.win.add(fr);
   for(let i=1;i<panes;i++){const o=-w/2+w*i/panes,bar=new THREE.Mesh(new THREE.BoxGeometry(vert?t+.02:.05,h,vert?.05:t+.02),new THREE.MeshStandardMaterial({color:lc}));
     bar.position.set(m.position.x+(vert?0:o),m.position.y,m.position.z+(vert?o:0));groups.win.add(bar);}
-  wins.push({tag,m,box:new THREE.Box3().setFromObject(m).expandByScalar(.05)});}
+  wins.push({tag,m,box:new THREE.Box3().setFromObject(m).expandByVector(vert?new THREE.Vector3(.3,.05,.05):new THREE.Vector3(.05,.05,.3))});}
 // dormitorio, muro norte (eje B) y sur (eje A)
-[719,886,1050,1214,1379].forEach(x=>win_('V5',AX(x),30,2.85,.69,3));
-[731,894,1058,1220,1387].forEach(x=>win_('V5',AX(x),430,2.85,.69,3));
+[727,891,1055,1220,1384].forEach(x=>win_('V5',AX(x),30,2.85,.69,3));
+[727,891,1055,1220,1384].forEach(x=>win_('V5',AX(x),430,2.85,.69,3));
 win_('V8',AX(592),30,1.70,.69,2);win_('V8',AX(591),430,1.70,.69,2);
 win_('V9',AX(508),30,1.00,.69,1);win_('V9',AX(508),430,1.00,.69,1);
 win_('V9',AX(1496),30,1.00,.69,1);win_('V9',AX(1628),430,1.00,.69,1);
@@ -282,7 +287,7 @@ function applyFix(){
   sleeveG.visible=fixMode;
   const n=clashes(),tags=[...new Set(wins.filter(w=>w.m.material.color.getHex()===0xff3030).map(w=>w.tag))];
   document.getElementById('clash').textContent=n===0
-    ?(fixMode?`Solución aplicada: ${sleeves.length} cruces de muro bajo el alféizar (2.15 a 2.30 m) con pasamuros. Ninguna ventana cruzada.`:`Revisión: ${wins.length} ventanas, ninguna cruzada por tubería.`)
+    ?(fixMode?`Solución aplicada: ${sleeves.length} cruces de muro bajo el alféizar (2.15 a 2.30 m) con pasamuros; las bajadas se separan 0.9 m del muro y se acercan por debajo del alféizar. Ninguna tubería cruza ni pasa a menos de 0.30 m frente a una ventana.`:`Revisión: ${wins.length} ventanas, ninguna cruzada por tubería.`)
     :`Sin solución: ${n} de ${wins.length} ventanas cruzadas por tubería (en rojo): ${tags.join(', ')}. Las ramas atraviesan el muro a 2.99 m o más, dentro de la franja de ventana 2.40 a 3.09 m.`;}
 applyFix();
 

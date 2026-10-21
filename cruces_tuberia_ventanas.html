@@ -79,7 +79,7 @@ button:hover,button:focus-visible{border-color:var(--accent);color:var(--accent)
 <section class="panel">
   <h2>Cómo se resuelve</h2>
   <div class="notes">
-    <p><b>Bajar bajo el alféizar.</b> La tubería baja por el interior hasta 2.30 m, atraviesa el muro con un pasamuros y sale casi a la altura de la luminaria exterior (2.20 m). El largo total de conduit no cambia, porque la bajada que antes se hacía afuera ahora se hace adentro.</p>
+    <p><b>Bajar bajo el alféizar.</b> La tubería baja del techo a unos 0.9 m del muro (no pegada a las ventanas), se acerca por debajo del alféizar a 2.30 m, atraviesa el muro con un pasamuros y sale casi a la altura de la luminaria exterior (2.20 m). El largo total de conduit no cambia, porque la bajada que antes se hacía afuera ahora se hace adentro.</p>
     <p><b>Mover a un tramo ciego.</b> Solo sirve donde queda muro macizo entre ventanas. En el dormitorio las ventanas casi no dejan tramos ciegos, por eso la mayoría de cruces no tiene esta opción.</p>
     <p><b>Pasar por encima.</b> No es posible: la ventana llega a 3.09 m, que es el borde superior del muro.</p>
     <p><b>Antes de ejecutar.</b> Esta es una propuesta de trabajo, no un cambio aprobado. El proyectista de instalaciones debe validar el recorrido, el pasamuros y el sellado. No se debe cortar el bastidor de madera ni la malla mosquitera.</p>
@@ -93,10 +93,10 @@ const AX=x=>95+1.353*(x-480), M=px=>(px-95)*S;       // plano de arquitectura (p
 const mw=(tag,xpt,w)=>({tag,c:M(AX(xpt)),w});
 const walls={
   N:{name:'Dormitorio, muro norte (eje B)',L:21.5,
-     win:[...[719,886,1050,1214,1379].map(x=>mw('V5',x,2.85)),mw('V8',592,1.70),mw('V9',508,1.0),mw('V9',1496,1.0),mw('V6',1590,2.35)],
+     win:[...[727,891,1055,1220,1384].map(x=>mw('V5',x,2.85)),mw('V8',592,1.70),mw('V9',508,1.0),mw('V9',1496,1.0),mw('V6',1590,2.35)],
      door:[{c:M(AX(508)),w:1.0},{c:M(AX(1497)),w:1.0}]},
   S:{name:'Dormitorio, muro sur (eje A)',L:21.5,
-     win:[...[731,894,1058,1220,1387].map(x=>mw('V5',x,2.85)),mw('V8',591,1.70),mw('V9',508,1.0),mw('V9',1628,1.0)],
+     win:[...[727,891,1055,1220,1384].map(x=>mw('V5',x,2.85)),mw('V8',591,1.70),mw('V9',508,1.0),mw('V9',1628,1.0)],
      door:[{c:M(AX(509)),w:1.0},{c:M(AX(1629)),w:1.0}]},
   E:{name:'Sala de estudio, muro este (eje 8)',L:5.39,
      win:[{tag:'V1',c:2.70,w:5.20}],door:[]}
