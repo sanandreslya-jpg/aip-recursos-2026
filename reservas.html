@@ -1,0 +1,378 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Reserva de recursos · AIP 16210</title>
+<style>
+:root{
+  --verde:#1f8a4c; --verde-osc:#14683a; --amarillo:#ffe600; --rojo:#d4202a;
+  --bg:#f4f7f5; --card:#fff; --txt:#1c2a22; --muted:#5d6c63; --line:#dfe6e2; --line2:#c9d4ce;
+  --head:#14683a; --tint:#e3f4ea; --soft:#eef3f0; --ytint:#fff3c4; --ytxt:#7a5600; --rtint:#fde0e1; --bad:#c21b25;
+}
+@media (prefers-color-scheme:dark){:root{
+  --bg:#0f1713; --card:#17211b; --txt:#e6efe9; --muted:#9db0a4; --line:#2a3a31; --line2:#3b4f43;
+  --head:#6fdc9c; --tint:#1d3a2a; --soft:#1e2b23; --ytint:#3d3510; --ytxt:#f0cf55; --rtint:#432225; --bad:#ff7d84; color-scheme:dark}}
+*{box-sizing:border-box}
+body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--txt);font-size:15px}
+header{background:linear-gradient(135deg,var(--verde-osc),var(--verde));color:#fff;border-bottom:5px solid var(--amarillo)}
+.hw{max-width:900px;margin:auto;padding:12px 16px;display:flex;gap:12px;align-items:center}
+.hw img{height:54px}
+.hw h1{margin:0;font-size:1.1rem;line-height:1.2}
+.hw p{margin:2px 0 0;font-size:.78rem;opacity:.92}
+main{max-width:900px;margin:auto;padding:14px 16px 40px;display:grid;gap:12px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px}
+label{display:block;font-size:.78rem;font-weight:600;color:var(--muted);margin:0 0 4px}
+select,input,textarea{width:100%;padding:10px;border:1px solid var(--line2);border-radius:8px;font:inherit;background:var(--card);color:var(--txt)}
+select:focus,input:focus,textarea:focus,button:focus-visible{outline:2px solid var(--amarillo);outline-offset:1px}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media(max-width:520px){.row{grid-template-columns:1fr}}
+.btn{border:0;border-radius:8px;padding:10px 16px;font:inherit;font-weight:700;cursor:pointer;background:var(--verde);color:#fff}
+.btn:hover{background:var(--verde-osc)} .btn.sec{background:var(--soft);color:var(--txt)} .btn.red{background:var(--rojo)}
+.btn.sm{padding:7px 12px;font-size:.85rem} .btn:disabled{opacity:.45;cursor:not-allowed}
+.tabs,.weeks,.days{display:flex;gap:6px;flex-wrap:wrap}
+.tabs button,.weeks button,.days button{border:1px solid var(--line);background:var(--card);color:var(--txt);padding:9px 14px;border-radius:999px;font:inherit;font-weight:600;cursor:pointer}
+.tabs button.on,.weeks button.on,.days button.on{background:var(--verde);border-color:var(--verde);color:#fff}
+.days{flex-wrap:nowrap;overflow-x:auto;padding-bottom:2px}
+.days button{flex:1;min-width:64px;text-align:center;border-radius:10px;padding:7px 4px;line-height:1.2}
+.days small{display:block;font-weight:500;opacity:.85}
+.days button:disabled{opacity:.4;cursor:not-allowed}
+.slot{display:grid;grid-template-columns:90px 1fr auto;gap:8px 12px;align-items:center;padding:12px 0;border-top:1px solid var(--line)}
+.slot:first-child{border-top:0}
+.slot .h b{display:block;font-size:1rem} .slot .h span{font-size:.78rem;color:var(--muted)}
+.chs{display:flex;gap:5px;flex-wrap:wrap}
+.ch{background:var(--tint);color:var(--head);border-radius:999px;padding:2px 9px;font-size:.76rem;font-weight:600}
+.ch.l{background:var(--ytint);color:var(--ytxt)} .ch.z{background:var(--rtint);color:var(--bad)}
+.otros{grid-column:1/-1;font-size:.78rem;color:var(--muted)}
+.mia{grid-column:1/-1;background:var(--tint);border-radius:8px;padding:6px 10px;font-size:.85rem;color:var(--head);font-weight:600}
+.x{padding:6px 10px;margin:4px 0;background:var(--soft);border-radius:8px;font-size:.78rem;color:var(--muted);text-align:center}
+@media(max-width:520px){.slot{grid-template-columns:1fr auto}.slot .chs{grid-column:1/-1;order:3}}
+.item{display:flex;justify-content:space-between;gap:10px;align-items:center;padding:10px 0;border-top:1px solid var(--line)}
+.item:first-child{border-top:0} .item small{color:var(--muted);display:block}
+.step{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 0}
+.stp{display:flex;align-items:center;gap:8px}
+.stp button{width:38px;height:38px;border-radius:8px;border:1px solid var(--line2);background:var(--card);color:var(--txt);font-size:1.2rem;cursor:pointer}
+.stp output{min-width:30px;text-align:center;font-weight:700;font-size:1.1rem}
+dialog{background:var(--card);color:var(--txt);border:0;border-radius:12px;padding:18px;width:min(440px,94vw);box-shadow:0 10px 40px #0005}
+dialog::backdrop{background:#0006}
+dialog h3{margin:0 0 4px;color:var(--head)}
+.muted{color:var(--muted);font-size:.85rem}
+.empty{text-align:center;color:var(--muted);padding:24px 8px}
+.toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);max-width:92vw;background:var(--verde-osc);color:#fff;padding:12px 18px;border-radius:10px;font-weight:600;opacity:0;pointer-events:none;transition:.25s;z-index:9;text-align:center}
+.toast.show{opacity:1} .toast.err{background:var(--rojo)}
+.banner{background:var(--ytint);color:var(--ytxt);border-radius:8px;padding:8px 12px;font-size:.82rem}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<header><div class="hw">
+  <img src="insignia.png" alt="Insignia I.E. 16210">
+  <div><h1>Reserva de recursos tecnológicos</h1><p>AIP · I.E. 16210 «Alejandro Sánchez Arteaga» · <span id="sync"></span></p></div>
+</div></header>
+
+<main>
+  <div class="card">
+    <div class="row">
+      <div><label for="selDoc">Docente</label><select id="selDoc"></select></div>
+      <div id="claveBox" hidden><label for="clave">Su clave</label><input id="clave" type="password" autocomplete="off" placeholder="Clave personal"></div>
+    </div>
+  </div>
+  <div class="banner" id="demo" hidden></div>
+
+  <div class="tabs" id="tabs">
+    <button data-t="reservar" class="on">Reservar</button>
+    <button data-t="mia">Mi semana</button>
+    <button data-t="coord">Coordinación</button>
+  </div>
+  <div class="weeks" id="weeks"></div>
+
+  <section id="p-reservar" class="card">
+    <div class="days" id="days"></div>
+    <div id="slots" style="margin-top:8px"></div>
+  </section>
+
+  <section id="p-mia" class="card" hidden>
+    <div id="miaList"></div>
+    <div style="margin-top:10px"><button class="btn sec sm" id="btnCopiar">Copiar mi horario</button></div>
+  </section>
+
+  <section id="p-coord" class="card" hidden>
+    <div id="coordLogin">
+      <label for="pin">PIN de coordinación</label>
+      <div style="display:flex;gap:8px"><input id="pin" type="password" autocomplete="off"><button class="btn" id="btnPin">Entrar</button></div>
+    </div>
+    <div id="coordBody" hidden>
+      <h3 style="margin:0 0 8px;color:var(--head)">Bloquear horario</h3>
+      <div class="row">
+        <div><label for="bDia">Día</label><select id="bDia"></select></div>
+        <div><label for="bMot">Motivo</label><input id="bMot" placeholder="Ej. Evaluación, mantenimiento"></div>
+        <div><label for="bDesde">Desde la hora</label><select id="bDesde"></select></div>
+        <div><label for="bHasta">Hasta la hora</label><select id="bHasta"></select></div>
+      </div>
+      <div style="margin:10px 0 18px"><button class="btn red sm" id="btnBloq">Bloquear</button></div>
+      <h3 style="margin:0 0 4px;color:var(--head)">Reservas de la semana</h3>
+      <div id="coordList"></div>
+    </div>
+  </section>
+</main>
+
+<dialog id="dlg">
+  <h3 id="dTitulo"></h3><p class="muted" id="dSub" style="margin:0 0 8px"></p>
+  <div id="dSteps"></div>
+  <div class="row" style="margin-top:8px">
+    <div><label for="dGrado">Grado y sección</label><select id="dGrado"></select></div>
+    <div><label for="dNota">Nota (opcional)</label><input id="dNota" placeholder="Ej. Tema de la sesión" maxlength="80"></div>
+  </div>
+  <div style="margin-top:14px;display:flex;gap:8px;justify-content:flex-end">
+    <button class="btn sec" id="dNo">Cancelar</button><button class="btn" id="dOk">Confirmar reserva</button>
+  </div>
+</dialog>
+<div class="toast" id="toast"></div>
+
+<script>
+// URL de la aplicación web de Google Apps Script (apps-script/Code.gs + Reservas.gs). Vacía = modo demostración.
+const API="https://script.google.com/macros/s/AKfycbwxdxjqiDaUrtEJxBn1in6X258fhNGoTJDkrmhnPeKN1pzxRMDLsUG0Byn-9m2lEzUn/exec";
+const DEMO_PIN="1234";
+
+const CAP = { laptops: 35, parlantes: 5, proyectores: 5, sala: 1 };
+const ITEMS = ['laptops', 'parlantes', 'proyectores', 'sala'];
+const NOMBRES = { laptops: 'laptops', parlantes: 'parlantes', proyectores: 'proyectores', sala: 'sala de cómputo' };
+const MAX_BLOQUES = 10; // bloques por docente y por semana
+const HORAS = 7;
+
+function addDays(s, n) { const d = new Date(s + 'T12:00:00Z'); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); }
+function lunesDe(s) { const d = new Date(s + 'T12:00:00Z'); return addDays(s, -((d.getUTCDay() + 6) % 7)); }
+function semanaBase(hoy) { return lunesDe(addDays(hoy, 2)); } // sábado y domingo ya miran la semana siguiente
+function usoDe(reservas, fecha, hora) {
+  const u = { laptops: 0, parlantes: 0, proyectores: 0, sala: 0 };
+  reservas.forEach(r => { if (r.fecha === fecha && +r.hora === +hora) ITEMS.forEach(k => (u[k] += +r[k] || 0)); });
+  return u;
+}
+function validar(reservas, r, hoy) {
+  if (!r.docente) return 'Elija su nombre';
+  const dow = new Date(r.fecha + 'T12:00:00Z').getUTCDay();
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(r.fecha) || dow < 1 || dow > 5) return 'Fecha no válida';
+  if (r.fecha < hoy) return 'No se puede reservar en una fecha pasada';
+  if (r.fecha > addDays(semanaBase(hoy), 11)) return 'Solo puede reservar esta semana y la siguiente';
+  if (!(+r.hora >= 1 && +r.hora <= HORAS)) return 'Hora no válida';
+  let total = 0;
+  for (const k of ITEMS) {
+    const v = +r[k] || 0;
+    if (v < 0 || v !== Math.floor(v)) return 'Cantidad no válida';
+    total += v;
+  }
+  if (!total) return 'Elija al menos un recurso';
+  const u = usoDe(reservas, r.fecha, r.hora);
+  for (const k of ITEMS) {
+    if ((+r[k] || 0) > CAP[k] - u[k]) return 'No alcanza: en ese bloque quedan ' + (CAP[k] - u[k]) + ' de ' + NOMBRES[k] + '. Actualice y vuelva a intentar';
+  }
+  if (!r.bloqueo) {
+    if (reservas.some(x => x.docente === r.docente && x.fecha === r.fecha && +x.hora === +r.hora)) return 'Ya tiene una reserva en ese bloque';
+    const sem = lunesDe(r.fecha);
+    if (reservas.filter(x => x.docente === r.docente && lunesDe(x.fecha) === sem).length >= MAX_BLOQUES) return 'Llegó al máximo de ' + MAX_BLOQUES + ' bloques por semana';
+  }
+  return null;
+}
+function planBloqueo(reservas, o, hoy) {
+  const rows = [];
+  for (let h = +o.desde; h <= +o.hasta; h++) {
+    const u = usoDe(reservas.concat(rows), o.fecha, h);
+    const r = { fecha: o.fecha, hora: h, docente: 'BLOQUEO', area: '', grado: '', nota: o.motivo || 'Bloqueado', bloqueo: true };
+    let t = 0;
+    ITEMS.forEach(k => { r[k] = CAP[k] - u[k]; t += r[k]; });
+    if (!t) continue;
+    const e = validar(reservas.concat(rows), r, hoy);
+    if (e) return { error: e };
+    rows.push(r);
+  }
+  return { rows: rows };
+}
+
+
+const LAB={laptops:"Laptops",parlantes:"Parlantes",proyectores:"Proyectores",sala:"Sala de cómputo"};
+const CORTO={laptops:"Laptops",parlantes:"Parlantes",proyectores:"Proyect.",sala:"Sala"};
+const AREAS={MAT:"Matemática",COM:"Comunicación",CT:"Ciencia y Tecnología",CCSS:"Ciencias Sociales",ING:"Inglés",ARTE:"Arte y Cultura",EPT:"Educación para el Trabajo",EF:"Educación Física",RELIG:"Educación Religiosa",DPCC:"DPCC"};
+const DOCENTES=[
+["Fernando Rivasplata Lule","MAT"],["Segundo Fernando Monzon Rojas","MAT"],["Willy Sandro Guevara Galvez","MAT"],["Roger Yrigoin Nuñez","MAT"],["Eguli Fernández Rubio","MAT"],
+["Carmela Delgado Cruz","COM"],["Yesica Yuliana Coral Bazan","COM"],["Elgar Silva Diaz","COM"],["Emelecko Guerrero Nauca","COM"],
+["Doris Edisa Monteza Huaman","CT"],["Miriam Esmeralda Calle Merino","CT"],["Jorge Luis Altamirano Heros","CT"],["Pablo Vásquez Uriarte","CT"],
+["María Eliza Gallardo Correa","CCSS"],["Timoteo Vega Montoya","CCSS"],["José Angel Silva Fernández","CCSS"],["Fernando García Olea","CCSS"],["Jorge Alarcon Llamo","CCSS"],
+["Ebelio Maldonado Cubas","ING"],["Maritza Chuquizuta Villareal","ING"],["Alfaro Flores Luz Magaly","ING"],
+["Juana Rene Huaman Heredia","ARTE"],["Ayala López Doris","ARTE"],
+["Francili Pérez Sáchez","EPT"],["Max Serrano Mesia","EPT"],
+["Roger Villana Lobato","EF"],["Elmer Delgado Salazar","EF"],["José Aladair Nuñez Rojas","EF"],
+["Isabel Díaz Delgado","RELIG"],["Cesar Parraguez Falla","RELIG"],["Guanito Eli Díaz Hugo","DPCC"]
+].map(([nombre,area])=>({nombre,area,protegido:false}));
+const GRADOS=["—"];["1°","2°","3°","4°","5°"].forEach((g,i)=>("ABCDE".slice(0,i?4:5)).split("").forEach(s=>GRADOS.push(g+" "+s)));
+
+// Horas pedagógicas (horario recortado de 43 min, secundaria 2026)
+const mk=t=>[{x:t,i:"07:30",f:"07:44"},{h:1,i:"07:44",f:"08:27"},{h:2,i:"08:27",f:"09:10"},{h:3,i:"09:10",f:"09:53"},{h:4,i:"09:53",f:"10:36"},{x:"Recreo",i:"10:36",f:"11:06"},{h:5,i:"11:06",f:"11:49"},{h:6,i:"11:49",f:"12:32"},{h:7,i:"12:32",f:"13:15"}];
+const TJ=[{h:1,i:"07:30",f:"08:13"},{h:2,i:"08:13",f:"08:56"},{h:3,i:"08:56",f:"09:39"},{h:4,i:"09:39",f:"10:22"},{x:"Recreo",i:"10:22",f:"10:52"},{h:5,i:"11:04",f:"11:47"},{h:6,i:"11:47",f:"12:30"},{x:"Actividad física",i:"12:30",f:"12:44"},{h:7,i:"12:44",f:"13:15"}];
+const HOR=[mk("Formación general"),TJ,mk("Plan lector"),TJ,mk("Plan lector")];
+const horaDe=(d,h)=>HOR[d].find(b=>b.h===h);
+const DIAS=["Lunes","Martes","Miércoles","Jueves","Viernes"],MESES=["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"];
+const fcorta=s=>{const d=new Date(s+"T12:00:00Z");return d.getUTCDate()+" "+MESES[d.getUTCMonth()]};
+
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const lsGet=k=>{try{return localStorage.getItem(k)}catch(e){return null}},lsSet=(k,v)=>{try{localStorage.setItem(k,v)}catch(e){}};
+const localHoy=()=>{const d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")};
+function toast(t,err){const e=$("#toast");e.textContent=t;e.className="toast show"+(err?" err":"");clearTimeout(toast.t);toast.t=setTimeout(()=>e.className="toast",3200)}
+
+let S={docentes:DOCENTES,reservas:[],hoy:localHoy()},mode="local",admin=null;
+const UI={semana:null,dia:0,tab:"reservar",doc:lsGet("aip_doc")||""};
+
+// ---- comunicación
+async function remote(body){
+  const r=body?await fetch(API,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify(body)}):await fetch(API+"?action=reservas");
+  return r.json();
+}
+const LSK="aip_reservas_demo";
+function localOp(o){
+  let L;try{L=JSON.parse(lsGet(LSK))||{reservas:[]}}catch(e){L={reservas:[]}}
+  const hoy=localHoy();let err=null;
+  const uid=()=>Math.random().toString(36).slice(2,10);
+  switch(o.action){
+    case"reservar":err=validar(L.reservas,o.r,hoy);if(!err)L.reservas.push({...o.r,bloqueo:undefined,id:uid(),creado:new Date().toISOString()});break;
+    case"cancelar":{const r=L.reservas.find(x=>x.id===o.id&&x.docente===o.docente);if(!r)err="No se encontró la reserva";else L.reservas=L.reservas.filter(x=>x!==r)}break;
+    case"adminCheck":if(o.pin!==DEMO_PIN)err="PIN incorrecto";break;
+    case"cancelarAdmin":if(o.pin!==DEMO_PIN)err="PIN incorrecto";else L.reservas=L.reservas.filter(x=>x.id!==o.id);break;
+    case"bloquear":if(o.pin!==DEMO_PIN)err="PIN incorrecto";else{const p=planBloqueo(L.reservas,o,hoy);if(p.error)err=p.error;else p.rows.forEach(r=>L.reservas.push({...r,bloqueo:undefined,id:uid()}))}break;
+  }
+  lsSet(LSK,JSON.stringify(L));
+  return{docentes:DOCENTES,reservas:L.reservas,hoy:hoy,error:err};
+}
+function apply(s){
+  S={docentes:s.docentes&&s.docentes.length?s.docentes:DOCENTES,reservas:s.reservas||[],hoy:s.hoy||localHoy()};
+  fillDocentes();render();
+}
+async function op(o){
+  try{
+    const s=mode==="remote"?await remote(o):localOp(o);
+    if(s.reservas)apply(s);
+    if(s.error){toast(s.error,1);return false}
+    return true;
+  }catch(e){toast("No se pudo conectar. Revise su internet e intente de nuevo",1);return false}
+}
+function setStatus(){
+  $("#sync").textContent=mode==="remote"?"● En línea":"○ Demostración";
+  const b=$("#demo");b.hidden=mode==="remote";
+  b.textContent=API?"No hay conexión con la Hoja de Google. Las reservas de esta pantalla solo se guardan en este equipo (demostración).":"Modo demostración: las reservas solo se guardan en este equipo.";
+}
+async function pull(){
+  if(!API){setStatus();return}
+  try{
+    let s=await remote();
+    if(s.error)throw new Error(s.error);
+    if(!s.docentes.length)s=await remote({action:"initDocentes",docentes:DOCENTES.map(d=>({nombre:d.nombre,area:d.area}))});
+    mode="remote";apply(s);
+  }catch(e){if(mode==="remote")toast("Sin conexión. Reintentando…",1);mode=mode==="remote"?"local":mode}
+  setStatus();
+  if(mode==="local"){const s=localOp({action:"nada"});apply(s)}
+}
+
+// ---- vistas
+const hoy=()=>S.hoy;
+function semanas(){const b=semanaBase(hoy());return[b,addDays(b,7)]}
+function docObj(){return S.docentes.find(d=>d.nombre===UI.doc)}
+function fillDocentes(){
+  const sel=$("#selDoc"),cur=UI.doc;
+  sel.innerHTML=`<option value="">— Elija su nombre —</option>`+S.docentes.map(d=>`<option value="${esc(d.nombre)}"${d.nombre===cur?" selected":""}>${esc(d.nombre)} · ${esc(d.area)}</option>`).join("");
+  const d=docObj();$("#claveBox").hidden=!(d&&d.protegido);
+}
+function resumen(r){return ITEMS.filter(k=>+r[k]).map(k=>k==="sala"?"Sala de cómputo":r[k]+" "+CORTO[k].toLowerCase()).join(" · ")}
+function render(){
+  const [w1,w2]=semanas();
+  if(!UI.semana||![w1,w2].includes(UI.semana)){UI.semana=w1;UI.dia=Math.max(0,Math.min(4,(new Date(hoy()+"T12:00:00Z").getUTCDay()+6)%7));if(hoy()>addDays(w1,4))UI.dia=0}
+  $("#weeks").innerHTML=[w1,w2].map((w,i)=>`<button data-w="${w}" class="${w===UI.semana?"on":""}">${i?"Próxima semana":"Esta semana"} · ${fcorta(w)} al ${fcorta(addDays(w,4))}</button>`).join("");
+  $("#days").innerHTML=DIAS.map((n,i)=>{const f=addDays(UI.semana,i);return`<button data-d="${i}" class="${i===UI.dia?"on":""}" ${f<hoy()?"disabled":""}>${n.slice(0,3)}<small>${fcorta(f)}</small></button>`}).join("");
+  $$("#tabs button").forEach(b=>b.classList.toggle("on",b.dataset.t===UI.tab));
+  ["reservar","mia","coord"].forEach(t=>$("#p-"+t).hidden=UI.tab!==t);
+  $("#weeks").hidden=false;
+  if(UI.tab==="reservar")renderSlots();
+  if(UI.tab==="mia")renderMia();
+  if(UI.tab==="coord")renderCoord();
+}
+function renderSlots(){
+  const fecha=addDays(UI.semana,UI.dia);
+  $("#slots").innerHTML=HOR[UI.dia].map(b=>{
+    if(b.x)return`<div class="x">${b.x} · ${b.i}–${b.f}</div>`;
+    const u=usoDe(S.reservas,fecha,b.h),lib=k=>CAP[k]-u[k];
+    const dia=S.reservas.filter(r=>r.fecha===fecha&&+r.hora===b.h);
+    const mia=dia.find(r=>r.docente===UI.doc),otras=dia.filter(r=>r!==mia);
+    const pasado=fecha<hoy(),vacio=ITEMS.every(k=>lib(k)===0);
+    const chips=ITEMS.map(k=>{const v=lib(k);return`<span class="ch ${v===0?"z":v<=CAP[k]/4?"l":""}">${CORTO[k]} <b>${k==="sala"?(v?"libre":"ocupada"):v}</b></span>`}).join("");
+    return`<div class="slot"><div class="h"><b>${b.h}.ª hora</b><span>${b.i}–${b.f}</span></div>
+      <div class="chs">${chips}</div>
+      <div>${mia?`<button class="btn sec sm" data-cancel="${mia.id}">Cancelar</button>`:`<button class="btn sm" data-res="${b.h}" ${pasado||vacio?"disabled":""}>Reservar</button>`}</div>
+      ${mia?`<div class="mia">Su reserva: ${esc(resumen(mia))}${mia.grado&&mia.grado!=="—"?" · "+esc(mia.grado):""}</div>`:""}
+      ${otras.length?`<div class="otros">${otras.map(r=>r.docente==="BLOQUEO"?`Bloqueado: ${esc(r.nota)}`:`${esc(r.docente)}${r.grado&&r.grado!=="—"?" ("+esc(r.grado)+")":""}: ${esc(resumen(r))}`).join(" · ")}</div>`:""}</div>`;
+  }).join("");
+}
+function misDeSemana(){const fin=addDays(UI.semana,4);return S.reservas.filter(r=>r.docente===UI.doc&&r.fecha>=UI.semana&&r.fecha<=fin).sort((a,b)=>a.fecha.localeCompare(b.fecha)||a.hora-b.hora)}
+function lineaRes(r){const d=(new Date(r.fecha+"T12:00:00Z").getUTCDay()+6)%7,b=horaDe(d,+r.hora)||{i:"",f:""};return`${DIAS[d]} ${fcorta(r.fecha)} · ${r.hora}.ª hora (${b.i}–${b.f})`}
+function renderMia(){
+  if(!UI.doc){$("#miaList").innerHTML=`<div class="empty">Elija su nombre arriba para ver sus reservas.</div>`;return}
+  const m=misDeSemana();
+  $("#miaList").innerHTML=`<p class="muted" style="margin:0 0 6px">${m.length} de ${MAX_BLOQUES} bloques usados esta semana</p>`+(m.length?m.map(r=>`<div class="item"><div><b>${lineaRes(r)}</b><small>${esc(resumen(r))}${r.grado&&r.grado!=="—"?" · "+esc(r.grado):""}${r.nota?" · "+esc(r.nota):""}</small></div><button class="btn sec sm" data-cancel="${r.id}">Cancelar</button></div>`).join(""):`<div class="empty">Aún no tiene reservas en esta semana.</div>`);
+}
+function renderCoord(){
+  $("#coordLogin").hidden=!!admin;$("#coordBody").hidden=!admin;
+  if(!admin)return;
+  const f0=UI.semana;
+  $("#bDia").innerHTML=DIAS.map((n,i)=>`<option value="${addDays(f0,i)}">${n} ${fcorta(addDays(f0,i))}</option>`).join("");
+  const hs=[1,2,3,4,5,6,7].map(h=>`<option value="${h}">${h}.ª hora</option>`).join("");
+  if(!$("#bDesde").options.length){$("#bDesde").innerHTML=hs;$("#bHasta").innerHTML=hs;$("#bHasta").value="7"}
+  const fin=addDays(f0,4),l=S.reservas.filter(r=>r.fecha>=f0&&r.fecha<=fin).sort((a,b)=>a.fecha.localeCompare(b.fecha)||a.hora-b.hora);
+  $("#coordList").innerHTML=l.length?l.map(r=>`<div class="item"><div><b>${lineaRes(r)}</b><small>${r.docente==="BLOQUEO"?"Bloqueado: "+esc(r.nota):esc(r.docente)+" · "+esc(resumen(r))+(r.grado&&r.grado!=="—"?" · "+esc(r.grado):"")}</small></div><button class="btn sec sm" data-adm="${r.id}">Anular</button></div>`).join(""):`<div class="empty">Sin reservas en esta semana.</div>`;
+}
+
+// ---- diálogo de reserva
+let dFecha,dHora,dSel;
+function abrir(h){
+  if(!UI.doc)return toast("Primero elija su nombre",1);
+  dFecha=addDays(UI.semana,UI.dia);dHora=h;dSel={laptops:0,parlantes:0,proyectores:0,sala:0};
+  const b=horaDe(UI.dia,h),u=usoDe(S.reservas,dFecha,h);
+  $("#dTitulo").textContent=`${DIAS[UI.dia]} ${fcorta(dFecha)} · ${h}.ª hora`;
+  $("#dSub").textContent=`${b.i}–${b.f} · ${UI.doc}`;
+  $("#dSteps").innerHTML=ITEMS.map(k=>{const max=CAP[k]-u[k];return`<div class="step"><div><b>${LAB[k]}</b><div class="muted">${max} disponible${max===1?"":"s"}</div></div>
+   <div class="stp"><button data-k="${k}" data-s="-1" aria-label="Menos">−</button><output id="o-${k}">0</output><button data-k="${k}" data-s="1" data-max="${max}" aria-label="Más">+</button></div></div>`}).join("");
+  $("#dGrado").innerHTML=GRADOS.map(g=>`<option>${g}</option>`).join("");$("#dNota").value="";
+  $("#dlg").showModal();
+}
+$("#dSteps").onclick=e=>{const b=e.target.closest("button");if(!b)return;const k=b.dataset.k,m=CAP[k]-usoDe(S.reservas,dFecha,dHora)[k];
+  dSel[k]=Math.max(0,Math.min(m,dSel[k]+ +b.dataset.s));$("#o-"+k).textContent=dSel[k]};
+$("#dNo").onclick=()=>$("#dlg").close();
+$("#dOk").onclick=async()=>{
+  const d=docObj();
+  const ok=await op({action:"reservar",clave:$("#clave").value,r:{fecha:dFecha,hora:dHora,docente:UI.doc,area:d?d.area:"",...dSel,grado:$("#dGrado").value,nota:$("#dNota").value.trim()}});
+  if(ok){$("#dlg").close();toast("Reserva confirmada")}
+};
+
+// ---- eventos
+$("#selDoc").onchange=e=>{UI.doc=e.target.value;lsSet("aip_doc",UI.doc);const d=docObj();$("#claveBox").hidden=!(d&&d.protegido);render()};
+$("#tabs").onclick=e=>{const b=e.target.closest("button");if(!b)return;UI.tab=b.dataset.t;render()};
+$("#weeks").onclick=e=>{const b=e.target.closest("button");if(!b)return;UI.semana=b.dataset.w;const f=addDays(UI.semana,UI.dia);if(f<hoy())UI.dia=Math.max(0,(new Date(hoy()+"T12:00:00Z").getUTCDay()+6)%7>4?0:(new Date(hoy()+"T12:00:00Z").getUTCDay()+6)%7);render()};
+$("#days").onclick=e=>{const b=e.target.closest("button");if(!b||b.disabled)return;UI.dia=+b.dataset.d;render()};
+document.addEventListener("click",async e=>{
+  const t=e.target.closest("button");if(!t)return;
+  if(t.dataset.res)abrir(+t.dataset.res);
+  else if(t.dataset.cancel){if(await op({action:"cancelar",id:t.dataset.cancel,docente:UI.doc,clave:$("#clave").value}))toast("Reserva cancelada")}
+  else if(t.dataset.adm){if(await op({action:"cancelarAdmin",pin:admin,id:t.dataset.adm}))toast("Reserva anulada")}
+});
+$("#btnPin").onclick=async()=>{const p=$("#pin").value;if(await op({action:"adminCheck",pin:p})){admin=p;$("#pin").value="";render()}};
+$("#btnBloq").onclick=async()=>{
+  const desde=+$("#bDesde").value,hasta=+$("#bHasta").value;
+  if(hasta<desde)return toast("La hora final debe ser igual o mayor que la inicial",1);
+  if(await op({action:"bloquear",pin:admin,fecha:$("#bDia").value,desde,hasta,motivo:$("#bMot").value.trim()}))toast("Horario bloqueado");
+};
+$("#btnCopiar").onclick=async()=>{
+  const m=misDeSemana();if(!m.length)return toast("No tiene reservas esta semana",1);
+  const txt=`Reservas AIP · ${UI.doc}\n`+m.map(r=>`- ${lineaRes(r)}: ${resumen(r)}${r.grado&&r.grado!=="—"?" ("+r.grado+")":""}`).join("\n");
+  try{await navigator.clipboard.writeText(txt);toast("Horario copiado")}catch(e){toast("No se pudo copiar",1)}
+};
+
+fillDocentes();render();pull().then(()=>setInterval(pull,30000));
+</script>
+</body>
+</html>

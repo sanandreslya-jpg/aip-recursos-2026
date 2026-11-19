@@ -93,15 +93,20 @@ function json_(o) {
   return ContentService.createTextOutput(JSON.stringify(o)).setMimeType(ContentService.MimeType.JSON);
 }
 
-function doGet() {
-  try { return json_(state_()); } catch (err) { return json_({ error: String(err) }); }
+function doGet(ev) {
+  try {
+    if (ev && ev.parameter && ev.parameter.action === 'reservas') return json_(reservasGet_());
+    return json_(state_());
+  } catch (err) { return json_({ error: String(err) }); }
 }
 
 function doPost(ev) {
   const lock = LockService.getScriptLock();
   try {
     lock.waitLock(20000);
-    apply_(JSON.parse(ev.postData.contents));
+    const body = JSON.parse(ev.postData.contents);
+    if (RES_ACTIONS.indexOf(body.action) >= 0) return json_(reservasPost_(body));
+    apply_(body);
     SpreadsheetApp.flush();
     return json_(state_());
   } catch (err) {
