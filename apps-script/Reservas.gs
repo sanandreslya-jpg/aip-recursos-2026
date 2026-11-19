@@ -9,7 +9,7 @@ const ADMIN_PIN = '1234'; // CAMBIE este PIN: lo usa la coordinación del AIP pa
 const CAP = { laptops: 35, parlantes: 5, proyectores: 5, sala: 1 };
 const ITEMS = ['laptops', 'parlantes', 'proyectores', 'sala'];
 const NOMBRES = { laptops: 'laptops', parlantes: 'parlantes', proyectores: 'proyectores', sala: 'sala de cómputo' };
-const MAX_BLOQUES = 10; // bloques por docente y por semana
+const MAX_BLOQUES = 15; // bloques por docente y por semana
 const HORAS = 7;
 
 function addDays(s, n) { const d = new Date(s + 'T12:00:00Z'); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); }
@@ -45,6 +45,15 @@ function validar(reservas, r, hoy) {
   }
   return null;
 }
+function validarVarias(reservas, rs, hoy) {
+  const acc = reservas.slice();
+  for (const r of rs) {
+    const e = validar(acc, r, hoy);
+    if (e) return e + ' (' + r.hora + '.ª hora)';
+    acc.push(r);
+  }
+  return null;
+}
 function planBloqueo(reservas, o, hoy) {
   const rows = [];
   for (let h = +o.desde; h <= +o.hasta; h++) {
@@ -63,7 +72,7 @@ function planBloqueo(reservas, o, hoy) {
 
 const RES_H = ['id', 'fecha', 'hora', 'docente', 'area', 'laptops', 'parlantes', 'proyectores', 'sala', 'grado', 'nota', 'creado'];
 const DOC_H = ['nombre', 'area', 'clave'];
-const RES_ACTIONS = ['initDocentes', 'reservar', 'cancelar', 'bloquear', 'cancelarAdmin', 'adminCheck'];
+const RES_ACTIONS = ['initDocentes', 'reservar', 'reservarVarias', 'cancelar', 'bloquear', 'cancelarAdmin', 'adminCheck'];
 
 function hoyLima_() { return Utilities.formatDate(new Date(), 'America/Lima', 'yyyy-MM-dd'); }
 
@@ -100,29 +109,31 @@ function reservasPost_(e) {
     case 'adminCheck':
       if (!admin) return fail('PIN incorrecto');
       break;
-    case 'reservar': {
-      const d = rows_(docSh, DOC_H).find(x => x.nombre === e.r.docente);
-      if (!d) return fail('Docente no registrado');
+    case 'reservarVarias': {
+      const rs = e.rs || [];
+      if (!rs.length || rs.length > 7) return fail('Solicitud no válida');
+      const d = rows_(docSh, DOC_H).find(x => x.nombre === rs[0].docente);
+      if (!d || rs.some(r => r.docente !== d.nombre)) return fail('Docente no registrado');
       if (d.clave && String(e.clave || '') !== String(d.clave)) return fail('Clave incorrecta');
-      const r = e.r;
-      r.bloqueo = false;
-      const err = validar(resRead_(), r, hoy);
+      rs.forEach(r => (r.bloqueo = false));
+      const err = validarVarias(resRead_(), rs, hoy);
       if (err) return fail(err);
-      appendRes_(sh, r);
+      rs.forEach(r => appendRes_(sh, r));
       break;
     }
     case 'cancelar': {
       const d = rows_(docSh, DOC_H).find(x => x.nombre === e.docente);
       if (d && d.clave && String(e.clave || '') !== String(d.clave)) return fail('Clave incorrecta');
-      const row = findRow_(sh, e.id);
-      if (!row || sh.getRange(row, 4).getValue() !== e.docente) return fail('No se encontró la reserva');
-      sh.deleteRow(row);
+      for (const id of (e.ids || [e.id])) {
+        const row = findRow_(sh, id);
+        if (!row || sh.getRange(row, 4).getValue() !== e.docente) return fail('No se encontró la reserva');
+        sh.deleteRow(row);
+      }
       break;
     }
     case 'cancelarAdmin': {
       if (!admin) return fail('PIN incorrecto');
-      const row = findRow_(sh, e.id);
-      if (row) sh.deleteRow(row);
+      (e.ids || [e.id]).forEach(id => { const row = findRow_(sh, id); if (row) sh.deleteRow(row); });
       break;
     }
     case 'bloquear': {
